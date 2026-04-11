@@ -1,0 +1,70 @@
+/* ══════════════════════════════════════
+   base.css — Variables, reset, tipografía
+   Hoshi Studio · Arte y Belleza
+   ══════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@300;400;500&display=swap');
+
+/* ── Variables ── */
+:root {
+  --cream:      #F5F0EA;
+  --cream2:     #EDE8E0;
+  --gold:       #C9A84C;
+  --gold2:      #A8872B;
+  --gold-light: #E8D5A3;
+  --black:      #1A1A18;
+  --black2:     #2C2C28;
+  --gray:       #8A8880;
+  --gray-light: #D4D0C8;
+  --green:      #4A7C59;
+  --red:        #8C3A2E;
+  --white:      #FDFAF6;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Body ── */
+body {
+  font-family: 'Jost', sans-serif;
+  background: var(--cream);
+  color: var(--black);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* ── Layout principal ── */
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 20px;
+}
+
+/* ── Secciones (visibilidad) ── */
+.section { display: none; }
+.section.active { display: block; }
+
+/* ── Encabezado de sección ── */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.section-h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--black);
+}
+.section-h1 span { color: var(--gold); }
+
+/* ── Responsive base ── */
+@media (max-width: 680px) {
+  .nav-tabs { gap: 2px; }
+  .nav-tab  { padding: 8px 8px; font-size: 10px; }
+  .dash-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .form-grid { grid-template-columns: 1fr; }
+}

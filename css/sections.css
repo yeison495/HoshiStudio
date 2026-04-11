@@ -1,0 +1,281 @@
+/* ══════════════════════════════════════
+   sections.css — Estilos por módulo
+   Dashboard · Agenda · Servicios ·
+   Clientes · Finanzas
+   ══════════════════════════════════════ */
+
+/* ── Dashboard ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.kpi {
+  background: var(--white);
+  border: 1px solid var(--cream2);
+  border-radius: 8px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: var(--gold);
+}
+.kpi-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-bottom: 6px;
+}
+.kpi-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--black);
+  line-height: 1;
+}
+.kpi-value.green { color: var(--green); }
+.kpi-value.red   { color: var(--red); }
+.kpi-sub { font-size: 11px; color: var(--gray); margin-top: 4px; }
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* ── Lista de citas del día (compartida entre Dashboard y Agenda) ── */
+.day-appts { list-style: none; }
+.day-appt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  background: var(--cream);
+  border-left: 3px solid var(--gold);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.day-appt:hover      { background: var(--cream2); }
+.day-appt.completada { border-left-color: var(--green); opacity: 0.7; }
+.day-appt.cancelada  { border-left-color: var(--red);   opacity: 0.5; }
+.appt-time    { font-size: 11px; color: var(--gray); min-width: 42px; }
+.appt-client  { font-size: 13px; font-weight: 500; }
+.appt-service { font-size: 11px; color: var(--gray); }
+
+/* ── Agenda ── */
+.agenda-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+}
+@media (max-width: 750px) { .agenda-layout { grid-template-columns: 1fr; } }
+
+/* Calendario */
+.cal-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.cal-nav button {
+  background: var(--cream);
+  border: 1px solid var(--cream2);
+  border-radius: 4px;
+  width: 28px; height: 28px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+}
+.cal-nav button:hover { border-color: var(--gold); }
+.cal-month {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 600;
+  flex: 1;
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+.cal-day-header {
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray);
+  padding: 4px;
+}
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+  position: relative;
+  gap: 2px;
+}
+.cal-day:hover        { background: var(--cream2); }
+.cal-day.other-month  { opacity: 0.3; }
+.cal-day.today        { background: var(--black); color: var(--cream); font-weight: 500; }
+.cal-day.today:hover  { background: var(--black2); }
+.cal-day.selected     { background: rgba(201,168,76,0.2); border: 1px solid var(--gold); }
+.cal-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }
+
+/* ── Servicios ── */
+.service-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+.service-card {
+  background: var(--white);
+  border: 1px solid var(--cream2);
+  border-radius: 8px;
+  padding: 16px;
+  position: relative;
+  transition: border-color 0.2s;
+}
+.service-card:hover { border-color: var(--gold-light); }
+.service-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  border-radius: 0 0 8px 8px;
+}
+.service-name    { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.service-price   { font-size: 18px; font-weight: 500; color: var(--gold2); margin-bottom: 10px; }
+.service-dur     { font-size: 11px; color: var(--gray); letter-spacing: 0.06em; }
+.service-actions { display: flex; gap: 6px; margin-top: 12px; }
+
+/* ── Clientes ── */
+.clients-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+}
+@media (max-width: 800px) { .clients-layout { grid-template-columns: 1fr; } }
+
+.client-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.client-card {
+  background: var(--white);
+  border: 1px solid var(--cream2);
+  border-radius: 10px;
+  padding: 18px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.client-card:hover { border-color: var(--gold-light); box-shadow: 0 2px 12px rgba(201,168,76,0.1); }
+
+/* Badge VIP */
+.client-card.vip::before {
+  content: '✦ VIP';
+  position: absolute; top: 10px; right: 12px;
+  font-size: 9px; letter-spacing: 0.12em;
+  color: var(--gold2);
+  background: rgba(201,168,76,0.12);
+  border: 1px solid rgba(201,168,76,0.3);
+  padding: 2px 8px; border-radius: 20px;
+}
+/* Badge Sin visita */
+.client-card.alerta::before {
+  content: '⚠ Sin visita';
+  position: absolute; top: 10px; right: 12px;
+  font-size: 9px; letter-spacing: 0.1em;
+  color: var(--red);
+  background: rgba(140,58,46,0.08);
+  border: 1px solid rgba(140,58,46,0.2);
+  padding: 2px 8px; border-radius: 20px;
+}
+
+.client-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--black);
+  color: var(--gold);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.client-header  { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.client-name    { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 600; }
+.client-phone   { font-size: 12px; color: var(--gray); }
+
+.client-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+.client-stat     { text-align: center; }
+.client-stat-val {
+  font-size: 15px; font-weight: 500;
+  color: var(--black);
+  font-family: 'Cormorant Garamond', serif;
+}
+.client-stat-lbl {
+  font-size: 9px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--gray);
+}
+
+.client-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; }
+.client-tag {
+  font-size: 10px; padding: 2px 8px; border-radius: 20px;
+  background: var(--cream2); color: var(--gray);
+  letter-spacing: 0.04em;
+}
+
+/* Alerta de cumpleaños */
+.birthday-alert {
+  background: rgba(201,168,76,0.08);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 8px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; margin-bottom: 8px;
+}
+
+/* Detalle de cliente */
+.client-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  font-size: 13px;
+}
+.client-detail-item  { display: flex; flex-direction: column; gap: 2px; }
+.client-detail-label {
+  font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--gray);
+}
+.client-detail-value { font-weight: 500; }
+
+/* Timeline de visitas */
+.timeline { display: flex; flex-direction: column; gap: 0; margin-top: 8px; }
+.timeline-item {
+  display: flex; gap: 12px; padding: 8px 0;
+  border-bottom: 1px solid var(--cream2); font-size: 12px;
+}
+.timeline-item:last-child { border-bottom: none; }
+.timeline-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gold); margin-top: 4px; flex-shrink: 0;
+}
+
+/* ── Finanzas ── */
+.fin-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+}
+@media (max-width: 750px) { .fin-layout { grid-template-columns: 1fr; } }

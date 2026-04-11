@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hoshi Studio — Arte y Belleza</title>
+
+  <!-- Supabase JS (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="css/base.css"/>
+  <link rel="stylesheet" href="css/components.css"/>
+  <link rel="stylesheet" href="css/sections.css"/>
+</head>
+<body>
+
+<!-- Indicador de carga global -->
+<div id="globalLoader"><div class="loader-ring"></div></div>
+
+<!-- ══════════════════════════════════════
+     NAVEGACIÓN
+     ══════════════════════════════════════ -->
+<nav>
+  <div class="nav-brand">Hoshi <span>Studio</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active"  onclick="showSection('dashboard')">Inicio</button>
+    <button class="nav-tab"         onclick="showSection('agenda')">Agenda</button>
+    <button class="nav-tab"         onclick="showSection('servicios')">Servicios</button>
+    <button class="nav-tab"         onclick="showSection('clientes')">Clientes</button>
+    <button class="nav-tab"         onclick="showSection('finanzas')">Finanzas</button>
+  </div>
+  <div class="nav-date" id="navDate"></div>
+</nav>
+
+<main>
+
+  <!-- ══════ DASHBOARD ══════ -->
+  <div class="section active" id="dashboard">
+    <div class="section-header">
+      <div class="section-h1">Buenos días, <span>Viviana</span> ✦</div>
+    </div>
+    <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="dash-grid">
+      <div class="card">
+        <div class="card-title">Citas de hoy <span class="gold-tag" id="todayCount">0</span></div>
+        <ul class="day-appts" id="todayList"><li class="empty-state">Sin citas hoy</li></ul>
+      </div>
+      <div class="week-summary">
+        <div class="week-title">✦ Resumen semanal</div>
+        <div class="week-row"><span class="wlabel">Ingresos</span>       <span class="wval pos"  id="wkIngresos">$0</span></div>
+        <div class="week-row"><span class="wlabel">Salidas</span>        <span class="wval neg"  id="wkSalidas">$0</span></div>
+        <div class="week-row"><span class="wlabel">Citas realizadas</span><span class="wval"     id="wkCitas">0</span></div>
+        <div class="week-row total">
+          <span class="wlabel" style="font-size:11px;letter-spacing:.08em">BALANCE NETO</span>
+          <span class="wval gold" id="wkBalance">$0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ AGENDA ══════ -->
+  <div class="section" id="agenda">
+    <div class="section-header">
+      <div class="section-h1">Agenda</div>
+      <button class="btn btn-gold" onclick="openModal('apptModal')">+ Nueva cita</button>
+    </div>
+    <div class="agenda-layout">
+      <div class="card">
+        <div class="cal-nav">
+          <button onclick="changeMonth(-1)">‹</button>
+          <div class="cal-month" id="calMonth"></div>
+          <button onclick="changeMonth(1)">›</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-title" id="selectedDayTitle">Selecciona un día</div>
+          <div class="filter-row">
+            <button class="filter-btn active" onclick="setApptFilter('todas',this)">Todas</button>
+            <button class="filter-btn"        onclick="setApptFilter('pendiente',this)">Pendientes</button>
+            <button class="filter-btn"        onclick="setApptFilter('completada',this)">Completadas</button>
+          </div>
+          <ul class="day-appts" id="dayApptList"><li class="empty-state">Sin citas este día</li></ul>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-title">Todas las citas</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Fecha</th><th>Cliente</th><th>Servicio</th><th>Estado</th><th></th></tr></thead>
+              <tbody id="allApptTable"><tr><td colspan="5" class="empty-state">Sin citas</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SERVICIOS ══════ -->
+  <div class="section" id="servicios">
+    <div class="section-header">
+      <div class="section-h1">Servicios</div>
+      <button class="btn btn-gold" onclick="openModal('svcModal')">+ Agregar servicio</button>
+    </div>
+    <div class="service-grid" id="serviceGrid"><div class="empty-state" style="grid-column:1/-1">Sin servicios</div></div>
+  </div>
+
+  <!-- ══════ CLIENTES ══════ -->
+  <div class="section" id="clientes">
+    <div class="section-header">
+      <div class="section-h1">Clientes</div>
+      <div style="display:flex;gap:8px;">
+        <input id="clientSearch" placeholder="Buscar cliente..." style="width:200px" oninput="renderClients()"/>
+        <button class="btn btn-gold" onclick="openClientModal()">+ Nueva cliente</button>
+      </div>
+    </div>
+    <div class="clients-layout">
+      <div>
+        <div id="loyaltyAlerts" style="margin-bottom:16px;"></div>
+        <div class="filter-row">
+          <button class="filter-btn active" onclick="setClientFilter('todas',this)">Todas</button>
+          <button class="filter-btn"        onclick="setClientFilter('vip',this)">VIP (3+ citas)</button>
+          <button class="filter-btn"        onclick="setClientFilter('alerta',this)">Sin visita +30 días</button>
+          <button class="filter-btn"        onclick="setClientFilter('cumple',this)">Cumpleaños este mes</button>
+        </div>
+        <div class="client-grid" id="clientGrid"><div class="empty-state" style="grid-column:1/-1">Sin clientas</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="week-summary">
+          <div class="week-title">✦ Fidelización</div>
+          <div class="week-row"><span class="wlabel">Total clientas</span>      <span class="wval"     id="fl-total">0</span></div>
+          <div class="week-row"><span class="wlabel">VIP (3+ citas)</span>      <span class="wval gold" id="fl-vip">0</span></div>
+          <div class="week-row"><span class="wlabel">Sin visita +30d</span>     <span class="wval neg"  id="fl-alerta">0</span></div>
+          <div class="week-row"><span class="wlabel">Cumpleaños este mes</span> <span class="wval pos"  id="fl-cumple">0</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Cumpleaños este mes</div>
+          <div id="birthdayList"><div class="empty-state" style="padding:20px">Sin cumpleaños</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Clientas a recuperar</div>
+          <div id="recoverList"><div class="empty-state" style="padding:20px">¡Todas al día!</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ FINANZAS ══════ -->
+  <div class="section" id="finanzas">
+    <div class="section-header">
+      <div class="section-h1">Finanzas</div>
+      <button class="btn btn-gold" onclick="openModal('finModal')">+ Registrar movimiento</button>
+    </div>
+    <div class="fin-layout">
+      <div class="card">
+        <div class="card-title">Movimientos</div>
+        <div class="filter-row">
+          <button class="filter-btn active" onclick="setFinFilter('todos',this)">Todos</button>
+          <button class="filter-btn"        onclick="setFinFilter('ingreso',this)">Ingresos</button>
+          <button class="filter-btn"        onclick="setFinFilter('salida',this)">Salidas</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Tipo</th><th>Monto</th><th></th></tr></thead>
+            <tbody id="finTable"><tr><td colspan="6" class="empty-state">Sin movimientos</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="week-summary">
+          <div class="week-title">✦ Esta semana</div>
+          <div class="week-row"><span class="wlabel">Ingresos</span>             <span class="wval pos"  id="fw-ing">$0</span></div>
+          <div class="week-row"><span class="wlabel">Salidas / inversiones</span><span class="wval neg"  id="fw-sal">$0</span></div>
+          <div class="week-row total">
+            <span class="wlabel" style="font-size:11px;letter-spacing:.08em">BALANCE</span>
+            <span class="wval gold" id="fw-bal">$0</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Buscar por semana</div>
+          <div class="form-group"><label>Semana</label><input type="week" id="weekPicker" oninput="calcWeek()"/></div>
+          <div id="weekResult" style="margin-top:12px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Resumen general</div>
+          <div id="generalSummary"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ══════════════════════════════════════
+     MODALES
+     ══════════════════════════════════════ -->
+
+<!-- Cita -->
+<div class="modal-overlay" id="apptModal"><div class="modal">
+  <div class="modal-title">Nueva cita</div>
+  <input type="hidden" id="apptEditId"/>
+  <div class="form-grid">
+    <div class="form-group full"><label>Clienta registrada</label>
+      <select id="apptClientId" onchange="apptClientSelected()"><option value="">— Seleccionar (opcional) —</option></select></div>
+    <div class="form-group"><label>Nombre</label>   <input id="apptClient" placeholder="Nombre"/></div>
+    <div class="form-group"><label>Teléfono</label> <input id="apptPhone"  placeholder="Opcional"/></div>
+    <div class="form-group"><label>Fecha</label>    <input type="date" id="apptDate"/></div>
+    <div class="form-group"><label>Hora</label>     <input type="time" id="apptTime"/></div>
+    <div class="form-group full"><label>Servicio</label>
+      <select id="apptService"><option value="">— Selecciona servicio —</option></select></div>
+    <div class="form-group full"><label>Notas</label><textarea id="apptNotes" placeholder="Observaciones..."></textarea></div>
+    <div class="form-group"><label>Estado</label>
+      <select id="apptStatus">
+        <option value="pendiente">Pendiente</option>
+        <option value="confirmada">Confirmada</option>
+        <option value="completada">Completada</option>
+        <option value="cancelada">Cancelada</option>
+      </select></div>
+    <div class="form-group"><label>Valor ($)</label><input type="number" id="apptPrice" placeholder="0"/></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn"          onclick="closeModal('apptModal')">Cancelar</button>
+    <button class="btn btn-gold" onclick="saveAppt()">Guardar</button>
+  </div>
+</div></div>
+
+<!-- Detalle cita -->
+<div class="modal-overlay" id="apptDetailModal"><div class="modal">
+  <div class="modal-title" id="detailTitle"></div>
+  <div id="detailContent"></div>
+  <div class="modal-actions">
+    <button class="btn btn-danger btn-sm" onclick="deleteApptDetail()">Eliminar</button>
+    <button class="btn btn-sm"            onclick="closeModal('apptDetailModal')">Cerrar</button>
+    <button class="btn btn-gold btn-sm"   onclick="editApptDetail()">Editar</button>
+  </div>
+</div></div>
+
+<!-- Clienta -->
+<div class="modal-overlay" id="clientModal"><div class="modal" style="max-width:500px">
+  <div class="modal-title">Nueva clienta</div>
+  <input type="hidden" id="clientEditId"/>
+  <div class="form-grid">
+    <div class="form-group full"><label>Nombre completo</label>     <input id="clientName"     placeholder="Nombre"/></div>
+    <div class="form-group"><label>Teléfono / WhatsApp</label>      <input id="clientPhone"    placeholder="+57 300..."/></div>
+    <div class="form-group"><label>Fecha de cumpleaños</label>      <input type="date" id="clientBirthday"/></div>
+    <div class="form-group full"><label>Correo</label>              <input id="clientEmail"    type="email" placeholder="Opcional"/></div>
+    <div class="form-group full"><label>Servicio favorito</label>
+      <select id="clientFavService"><option value="">— Selecciona —</option></select></div>
+    <div class="form-group full"><label>Alergias / sensibilidades</label><input id="clientAllergies" placeholder="Ej: alérgica al acrílico..."/></div>
+    <div class="form-group full"><label>Notas</label><textarea id="clientNotes" placeholder="Preferencias, detalles..."></textarea></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn"          onclick="closeModal('clientModal')">Cancelar</button>
+    <button class="btn btn-gold" onclick="saveClient()">Guardar</button>
+  </div>
+</div></div>
+
+<!-- Detalle clienta -->
+<div class="modal-overlay" id="clientDetailModal"><div class="modal" style="max-width:520px">
+  <div class="modal-title" id="cdTitle"></div>
+  <div id="cdContent"></div>
+  <div class="modal-actions">
+    <button class="btn btn-danger btn-sm" onclick="deleteClient()">Eliminar</button>
+    <button class="btn btn-sm"            onclick="closeModal('clientDetailModal')">Cerrar</button>
+    <button class="btn btn-gold btn-sm"   onclick="editClientDetail()">Editar</button>
+  </div>
+</div></div>
+
+<!-- Servicio -->
+<div class="modal-overlay" id="svcModal"><div class="modal">
+  <div class="modal-title">Agregar servicio</div>
+  <input type="hidden" id="svcEditId"/>
+  <div class="form-grid">
+    <div class="form-group full"><label>Nombre</label>       <input id="svcName"     placeholder="Ej: Manicure semipermanente"/></div>
+    <div class="form-group"><label>Precio ($)</label>        <input type="number" id="svcPrice"    placeholder="0"/></div>
+    <div class="form-group"><label>Duración (min)</label>    <input type="number" id="svcDuration" placeholder="60"/></div>
+    <div class="form-group full"><label>Descripción</label><textarea id="svcDesc" placeholder="Descripción breve..."></textarea></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn"          onclick="closeModal('svcModal')">Cancelar</button>
+    <button class="btn btn-gold" onclick="saveSvc()">Guardar</button>
+  </div>
+</div></div>
+
+<!-- Movimiento -->
+<div class="modal-overlay" id="finModal"><div class="modal">
+  <div class="modal-title">Registrar movimiento</div>
+  <input type="hidden" id="finEditId"/>
+  <div class="form-grid">
+    <div class="form-group full"><label>Tipo</label>
+      <select id="finType"><option value="ingreso">Ingreso</option><option value="salida">Salida / Inversión</option></select></div>
+    <div class="form-group full"><label>Descripción</label><input id="finDesc" placeholder="Ej: Venta producto, compra insumos..."/></div>
+    <div class="form-group"><label>Monto ($)</label>  <input type="number" id="finAmount" placeholder="0"/></div>
+    <div class="form-group"><label>Fecha</label>      <input type="date"   id="finDate"/></div>
+    <div class="form-group full"><label>Categoría</label>
+      <select id="finCategory">
+        <option value="servicio">Servicio</option>
+        <option value="producto">Venta de producto</option>
+        <option value="insumos">Insumos / materiales</option>
+        <option value="arriendo">Arriendo / local</option>
+        <option value="publicidad">Publicidad</option>
+        <option value="equipo">Equipo / herramientas</option>
+        <option value="otro">Otro</option>
+      </select></div>
+    <div class="form-group full"><label>Notas</label><textarea id="finNotes" placeholder="Notas adicionales..."></textarea></div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn"          onclick="closeModal('finModal')">Cancelar</button>
+    <button class="btn btn-gold" onclick="saveFin()">Guardar</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════
+     SCRIPTS — orden de carga estricto
+     ══════════════════════════════════════ -->
+<script src="js/config.js"></script>   <!-- 1. Credenciales + cliente db -->
+<script src="js/state.js"></script>    <!-- 2. Estado UI + utilidades    -->
+<script src="js/db.js"></script>       <!-- 3. Operaciones Supabase       -->
+<script src="js/ui.js"></script>       <!-- 4. Nav, modales, toast        -->
+<script src="js/dashboard.js"></script><!-- 5. Módulos                    -->
+<script src="js/agenda.js"></script>
+<script src="js/servicios.js"></script>
+<script src="js/clientes.js"></script>
+<script src="js/finanzas.js"></script>
+
+<script>
+  // ── Arranque ──
+  updateNavDate();
+  (async () => {
+    setLoading(true);
+    try {
+      await Promise.all([dbGetServices(), dbGetClients(), dbGetAppointments(), dbGetFinances()]);
+      await renderDashboard();
+    } catch(e) {
+      document.getElementById('kpiGrid').innerHTML =
+        '<div style="color:var(--red);padding:20px;font-size:13px">⚠ No se pudo conectar con Supabase. Verifica las credenciales en <code>js/config.js</code></div>';
+      console.error('Supabase connection error:', e);
+    } finally {
+      setLoading(false);
+    }
+  })();
+</script>
+
+</body>
+</html>
