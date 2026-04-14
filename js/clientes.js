@@ -24,16 +24,27 @@ function daysSinceVisit(clientId) {
 
 function birthdayThisMonth(birthday) {
   if (!birthday) return false;
-  return parseInt(birthday.slice(5, 7)) === new Date().getMonth() + 1;
+  const p = parseBirthday(birthday);
+  return p ? p.m === new Date().getMonth() + 1 : false;
 }
 
 function daysUntilBirthday(birthday) {
   if (!birthday) return null;
-  const now = new Date();
-  const [, bm, bd] = birthday.slice(0, 10).split('-').map(Number);
-  let next = new Date(now.getFullYear(), bm - 1, bd);
+  const p = parseBirthday(birthday);
+  if (!p) return null;
+  const now  = new Date();
+  let   next = new Date(now.getFullYear(), p.m - 1, p.d);
   if (next < now) next.setFullYear(now.getFullYear() + 1);
   return Math.ceil((next - now) / 86400000);
+}
+
+// Formatea número a URL de WhatsApp (soporta Colombia +57 / 10 dígitos)
+function formatWhatsApp(phone) {
+  if (!phone) return null;
+  let n = phone.replace(/[\s\-\(\)\.]/g, '');
+  if (n.startsWith('+')) n = n.slice(1);
+  if (n.length === 10 && n.startsWith('3')) n = '57' + n;
+  return n || null;
 }
 
 // ── Sección completa ──
@@ -67,9 +78,24 @@ function renderClients() {
   if (clientFilter === 'cumple') clients = clients.filter(c => birthdayThisMonth(c.birthday));
 
   if (!clients.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">Sin clientas${q ? ' encontradas' : ' registradas aún'}</div>`;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">Sin clientes${q ? ' encontrados' : ' registrados aún'}</div>`;
     return;
   }
+
+  // SVG WhatsApp inline compacto
+  const waSVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94
+    1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297
+    -.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149
+    -.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297
+    -1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489
+    1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074
+    -.124-.272-.198-.57-.347z"/>
+    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.124 1.532 5.862L0 24l6.283-1.51A11.945 11.945 0 0012
+    24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818c-1.944 0-3.771-.527-5.338-1.444l-.383-.227-3.73.896
+    .932-3.618-.25-.398A9.786 9.786 0 012.182 12C2.182 6.59 6.59 2.182 12 2.182S21.818 6.59 21.818 12
+    17.41 21.818 12 21.818z"/>
+  </svg>`;
 
   grid.innerHTML = clients.map(c => {
     const appts        = clientAppts(c.id);
@@ -81,23 +107,40 @@ function renderClients() {
     const totalGastado = appts.reduce((s, a) => s + (a.price || 0), 0);
     const dsvText      = dsv === null ? 'Sin visitas' : dsv === 0 ? 'Hoy' : `Hace ${dsv} días`;
     const cardClass    = ['client-card', isVip ? 'vip' : (isAlerta && appts.length > 0 ? 'alerta' : '')].filter(Boolean).join(' ');
+    const waNr         = formatWhatsApp(c.phone);
+
+    // Últimos servicios únicos agendados (hasta 3)
+    const recentSvcs = [...new Set(
+      cache.appointments
+        .filter(a => a.client_id === c.id && a.service_name)
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .map(a => a.service_name)
+    )].slice(0, 3);
 
     return `
     <div class="${cardClass}" onclick="showClientDetail('${c.id}')">
       <div class="client-header">
         <div class="client-avatar">${clientInitials(c.name)}</div>
-        <div>
+        <div style="flex:1;min-width:0">
           <div class="client-name">${c.name}</div>
           <div class="client-phone">${c.phone || 'Sin teléfono'}</div>
           ${isBirthday ? `<div style="font-size:10px;color:var(--gold2);margin-top:2px">🎂 Cumpleaños este mes</div>` : ''}
         </div>
+        ${waNr ? `<a href="https://wa.me/${waNr}" target="_blank" class="btn-whatsapp"
+            onclick="event.stopPropagation()" title="Abrir WhatsApp">
+            ${waSVG} WA
+          </a>` : ''}
       </div>
       <div class="client-stats">
         <div class="client-stat"><div class="client-stat-val">${appts.length}</div><div class="client-stat-lbl">Visitas</div></div>
         <div class="client-stat"><div class="client-stat-val" style="font-size:13px">${fmt(totalGastado)}</div><div class="client-stat-lbl">Total</div></div>
         <div class="client-stat"><div class="client-stat-val" style="font-size:12px;${dsv !== null && dsv >= 30 ? 'color:var(--red)' : ''}">${dsvText}</div><div class="client-stat-lbl">Últ. visita</div></div>
       </div>
-      ${favSvc ? `<div class="client-tags"><span class="client-tag">${favSvc.name}</span></div>` : ''}
+      ${recentSvcs.length ? `
+        <div class="client-services">
+          <div class="client-services-label">Procedimientos</div>
+          <div class="client-tags" style="margin-top:4px">${recentSvcs.map(s => `<span class="client-tag">${s}</span>`).join('')}</div>
+        </div>` : (favSvc ? `<div class="client-tags"><span class="client-tag">${favSvc.name}</span></div>` : '')}
     </div>`;
   }).join('');
 }
@@ -110,18 +153,32 @@ function showClientDetail(id) {
   if (!c) return;
 
   const appts        = clientAppts(id).sort((a, b) => b.date.localeCompare(a.date));
+  const allAppts     = cache.appointments.filter(a => a.client_id === id);
   const totalGastado = appts.reduce((s, a) => s + (a.price || 0), 0);
   const dsv          = daysSinceVisit(id);
   const dsvText      = dsv === null ? 'Sin visitas aún' : dsv === 0 ? 'Hoy' : `Hace ${dsv} días`;
   const favSvc       = cache.services.find(s => s.id === c.fav_service_id);
-  const bday         = c.birthday
-    ? new Date(c.birthday + 'T12:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long' }) : '—';
-  const dub = daysUntilBirthday(c.birthday);
+  const bday         = fmtBirthday(c.birthday);
+  const dub          = daysUntilBirthday(c.birthday);
+  const waNr         = formatWhatsApp(c.phone);
+
+  // Resumen de servicios agendados (con conteo)
+  const svcSummary = {};
+  allAppts.forEach(a => { if (a.service_name) svcSummary[a.service_name] = (svcSummary[a.service_name] || 0) + 1; });
+  const svcList = Object.entries(svcSummary).sort((a, b) => b[1] - a[1]);
+
+  const waSVG = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.124 1.532 5.862L0 24l6.283-1.51A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818c-1.944 0-3.771-.527-5.338-1.444l-.383-.227-3.73.896.932-3.618-.25-.398A9.786 9.786 0 012.182 12C2.182 6.59 6.59 2.182 12 2.182S21.818 6.59 21.818 12 17.41 21.818 12 21.818z"/></svg>`;
 
   document.getElementById('cdTitle').innerHTML = `
     <div style="display:flex;align-items:center;gap:14px">
       <div class="client-avatar" style="width:52px;height:52px;font-size:22px">${clientInitials(c.name)}</div>
-      <div><div>${c.name}</div>${appts.length >= 3 ? '<span class="gold-tag" style="font-size:9px">VIP</span>' : ''}</div>
+      <div>
+        <div>${c.name}</div>
+        ${appts.length >= 3 ? '<span class="gold-tag" style="font-size:9px">VIP</span>' : ''}
+        ${waNr ? `<a href="https://wa.me/${waNr}" target="_blank" class="btn-whatsapp" style="margin-top:6px;font-size:11px;display:inline-flex">
+          ${waSVG} WhatsApp
+        </a>` : ''}
+      </div>
     </div>`;
 
   document.getElementById('cdContent').innerHTML = `
@@ -140,6 +197,13 @@ function showClientDetail(id) {
       </div>
       ${c.allergies ? `<div><div class="client-detail-label" style="margin-bottom:4px">Alergias</div><div style="background:rgba(140,58,46,0.06);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--red)">${c.allergies}</div></div>` : ''}
       ${c.notes     ? `<div><div class="client-detail-label" style="margin-bottom:4px">Notas</div><div style="background:var(--cream);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--gray)">${c.notes}</div></div>` : ''}
+      ${svcList.length ? `
+        <div>
+          <div class="client-detail-label" style="margin-bottom:8px">Servicios agendados</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${svcList.map(([name, count]) => `<span class="client-tag">${name} <span style="opacity:.5">(${count})</span></span>`).join('')}
+          </div>
+        </div>` : ''}
       ${appts.length ? `
         <div>
           <div class="client-detail-label" style="margin-bottom:8px">Historial de visitas</div>
@@ -166,30 +230,34 @@ async function saveClient() {
   const name = document.getElementById('clientName').value.trim();
   if (!name) { toast('Ingresa el nombre', 'error'); return; }
 
+  const bm       = document.getElementById('clientBirthdayMonth').value;
+  const bd       = document.getElementById('clientBirthdayDay').value;
+  const birthday = (bm && bd) ? `${bm}-${bd}` : null;
+
   setLoading(true);
   try {
     await dbSaveClient({
       id:             document.getElementById('clientEditId').value    || null,
-      name,
+      name:           capitalize(name),
       phone:          document.getElementById('clientPhone').value.trim(),
-      email:          document.getElementById('clientEmail').value.trim(),
-      birthday:       document.getElementById('clientBirthday').value  || null,
+      email:          document.getElementById('clientEmail').value.trim().toLowerCase(),
+      birthday,
       fav_service_id: document.getElementById('clientFavService').value || null,
-      allergies:      document.getElementById('clientAllergies').value.trim(),
-      notes:          document.getElementById('clientNotes').value.trim(),
+      allergies:      capitalize(document.getElementById('clientAllergies').value.trim()),
+      notes:          capitalize(document.getElementById('clientNotes').value.trim()),
     });
     closeModal('clientModal');
     await renderClientesSection();
-    toast('Clienta guardada ✦');
+    toast('Cliente guardado ✦');
   } catch(e) {
-    toast('Error guardando clienta', 'error');
+    toast('Error guardando cliente', 'error');
     console.error(e);
   } finally { setLoading(false); }
 }
 
 function openClientModal() {
   document.getElementById('clientEditId').value = '';
-  document.querySelector('#clientModal .modal-title').textContent = 'Nueva clienta';
+  document.querySelector('#clientModal .modal-title').textContent = 'Nuevo cliente';
   openModal('clientModal');
 }
 
@@ -201,24 +269,36 @@ function editClientDetail() {
   document.getElementById('clientName').value      = c.name;
   document.getElementById('clientPhone').value     = c.phone    || '';
   document.getElementById('clientEmail').value     = c.email    || '';
-  document.getElementById('clientBirthday').value  = c.birthday ? c.birthday.slice(0,10) : '';
   document.getElementById('clientAllergies').value = c.allergies || '';
   document.getElementById('clientNotes').value     = c.notes    || '';
-  document.querySelector('#clientModal .modal-title').textContent = 'Editar clienta';
+  document.querySelector('#clientModal .modal-title').textContent = 'Editar cliente';
+
+  // Cumpleaños: soporta formato "MM-DD" y "YYYY-MM-DD" (legado)
+  if (c.birthday) {
+    const p = parseBirthday(c.birthday);
+    if (p) {
+      document.getElementById('clientBirthdayMonth').value = String(p.m).padStart(2, '0');
+      document.getElementById('clientBirthdayDay').value   = String(p.d).padStart(2, '0');
+    }
+  } else {
+    document.getElementById('clientBirthdayMonth').value = '';
+    document.getElementById('clientBirthdayDay').value   = '';
+  }
+
   openModal('clientModal');
   setTimeout(() => { document.getElementById('clientFavService').value = c.fav_service_id || ''; }, 50);
 }
 
 async function deleteClient() {
-  if (!confirm('¿Eliminar esta clienta?')) return;
+  if (!confirm('¿Eliminar este cliente?')) return;
   setLoading(true);
   try {
     await dbDeleteClient(currentClientId);
     closeModal('clientDetailModal');
     await renderClientesSection();
-    toast('Clienta eliminada');
+    toast('Cliente eliminado');
   } catch(e) {
-    toast('Error eliminando clienta', 'error');
+    toast('Error eliminando cliente', 'error');
   } finally { setLoading(false); }
 }
 
@@ -238,12 +318,11 @@ function renderLoyaltyPanel() {
   bl.innerHTML = cumple.length
     ? cumple.sort((a,b) => daysUntilBirthday(a.birthday) - daysUntilBirthday(b.birthday)).map(c => {
         const dub = daysUntilBirthday(c.birthday);
-        const d   = new Date(c.birthday + 'T12:00:00');
         return `<div class="birthday-alert" onclick="showClientDetail('${c.id}')" style="cursor:pointer">
           <span style="font-size:18px">🎂</span>
           <div>
             <div style="font-weight:500;font-size:13px">${c.name}</div>
-            <div style="font-size:11px;color:var(--gray)">${dub===0?'¡Hoy!':dub===1?'Mañana':`En ${dub} días`} · ${d.toLocaleDateString('es-CO',{day:'numeric',month:'long'})}</div>
+            <div style="font-size:11px;color:var(--gray)">${dub===0?'¡Hoy!':dub===1?'Mañana':`En ${dub} días`} · ${fmtBirthday(c.birthday)}</div>
           </div>
         </div>`;}).join('')
     : '<div class="empty-state" style="padding:20px">Sin cumpleaños este mes</div>';
@@ -257,7 +336,7 @@ function renderLoyaltyPanel() {
         <div class="day-appt" onclick="showClientDetail('${c.id}')" style="border-left-color:var(--red)">
           <div><div class="appt-client">${c.name}</div><div class="appt-service">Sin visita hace ${daysSinceVisit(c.id)} días</div></div>
         </div>`).join('')
-    : '<div class="empty-state" style="padding:20px">¡Todas al día!</div>';
+    : '<div class="empty-state" style="padding:20px">¡Todos al día!</div>';
 
   const urgentes = cumple.filter(c => { const d = daysUntilBirthday(c.birthday); return d !== null && d <= 3; });
   document.getElementById('loyaltyAlerts').innerHTML = urgentes.map(c => {

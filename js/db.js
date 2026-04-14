@@ -143,3 +143,18 @@ async function dbDeleteFinance(id) {
   const { error } = await db.from('finances').delete().eq('id', id);
   if (error) throw error;
 }
+
+
+// ════════════════════════════════
+// USUARIOS
+// ════════════════════════════════
+
+async function dbGetUser(username) {
+  const { data, error } = await db
+    .from('users')
+    .select('id, username, password')
+    .eq('username', username)
+    .maybeSingle();
+  if (error) { console.error(error); return null; }
+  return data;
+}

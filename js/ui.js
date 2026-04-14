@@ -62,28 +62,26 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 
 function _resetForm(id) {
   const fields = {
-    apptModal:         ['apptClient','apptPhone','apptDate','apptTime','apptNotes','apptPrice','apptEditId'],
-    clientModal:       ['clientName','clientPhone','clientEmail','clientBirthday','clientAllergies','clientNotes','clientEditId'],
-    svcModal:          ['svcName','svcPrice','svcDuration','svcDesc','svcEditId'],
-    finModal:          ['finDesc','finAmount','finDate','finNotes','finEditId'],
+    apptModal:   ['apptClient','apptPhone','apptDate','apptTime','apptNotes','apptPrice','apptEditId'],
+    clientModal: ['clientName','clientPhone','clientEmail','clientAllergies','clientNotes','clientEditId'],
+    svcModal:    ['svcName','svcPrice','svcDuration','svcDesc','svcEditId'],
+    finModal:    ['finDesc','finAmount','finDate','finNotes','finEditId'],
   };
   const selects = {
     apptModal:   { apptStatus: 'pendiente', apptClientId: '', apptService: '' },
-    clientModal: { clientFavService: '' },
+    clientModal: { clientFavService: '', clientBirthdayMonth: '', clientBirthdayDay: '' },
     finModal:    { finType: 'ingreso', finCategory: 'servicio' },
   };
   const titles = {
     apptModal:   'Nueva cita',
-    clientModal: 'Nueva clienta',
+    clientModal: 'Nuevo cliente',
     svcModal:    'Agregar servicio',
     finModal:    'Registrar movimiento',
   };
 
   (fields[id] || []).forEach(f => { const el = document.getElementById(f); if (el) el.value = ''; });
   Object.entries(selects[id] || {}).forEach(([k, v]) => { const el = document.getElementById(k); if (el) el.value = v; });
-  const titleEl = document.getElementById(id.replace('Modal','ModalTitle').replace('appt','appt').replace('client','client').replace('svc','svc').replace('fin','fin'));
   if (titles[id]) {
-    // find the .modal-title inside the modal
     const modal = document.getElementById(id);
     if (modal) {
       const t = modal.querySelector('.modal-title');
@@ -96,11 +94,12 @@ function _populateApptSelects() {
   const svcSel = document.getElementById('apptService');
   svcSel.innerHTML = '<option value="">— Selecciona servicio —</option>';
   cache.services.forEach(s => {
-    svcSel.innerHTML += `<option value="${s.id}">${s.name} (${fmt(s.price)})</option>`;
+    // Solo muestra el nombre del servicio (sin precio)
+    svcSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
   });
 
   const cliSel = document.getElementById('apptClientId');
-  cliSel.innerHTML = '<option value="">— Clienta existente (opcional) —</option>';
+  cliSel.innerHTML = '<option value="">— Cliente existente (opcional) —</option>';
   cache.clients.forEach(c => {
     cliSel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
   });

@@ -42,10 +42,193 @@ nav {
 }
 .nav-tab:hover { color: var(--gold-light); }
 .nav-tab.active { background: rgba(201,168,76,0.15); color: var(--gold); }
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 .nav-date {
   font-size: 11px;
   color: var(--gray);
   letter-spacing: 0.08em;
+}
+.btn-logout {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: transparent;
+  color: rgba(255,255,255,0.55);
+  cursor: pointer;
+  transition: all .15s;
+  font-family: 'Jost', sans-serif;
+  letter-spacing: .06em;
+}
+.btn-logout:hover {
+  border-color: rgba(255,255,255,0.5);
+  color: white;
+}
+
+/* ── Login overlay ── */
+#loginOverlay {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #1a0a0a 0%, #2d1515 50%, #1a0a0a 100%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.login-card {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 40px;
+  width: 360px;
+  max-width: calc(100vw - 40px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeInUp .35s ease;
+}
+@keyframes fadeInUp {
+  from { opacity:0; transform:translateY(20px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.login-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--black);
+  text-align: center;
+  letter-spacing: .02em;
+  line-height: 1;
+}
+.login-brand span { color: var(--gold2); }
+.login-tagline {
+  text-align: center;
+  color: var(--gray);
+  font-size: 11px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  margin-top: -8px;
+}
+.login-error {
+  background: rgba(140,58,46,0.08);
+  border: 1px solid rgba(140,58,46,0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--red);
+  font-size: 12px;
+}
+.login-footer {
+  text-align: center;
+  color: var(--gray);
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+/* ── Botón WhatsApp ── */
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #25D366;
+  color: white !important;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background .2s, transform .1s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-whatsapp:hover {
+  background: #1ebe59;
+  transform: translateY(-1px);
+}
+
+/* ── Procedimientos en tarjeta de cliente ── */
+.client-services {
+  padding: 8px 14px;
+  border-top: 1px solid var(--cream2);
+}
+.client-services-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-bottom: 4px;
+}
+
+/* ── Paginación ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+  padding: 12px 0 4px;
+  flex-wrap: wrap;
+}
+.page-btn {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--cream2);
+  background: var(--white);
+  color: var(--black);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .15s;
+  padding: 0 8px;
+  font-family: 'Jost', sans-serif;
+}
+.page-btn:hover:not(:disabled) {
+  border-color: var(--gold2);
+  color: var(--gold2);
+}
+.page-btn.active {
+  background: var(--gold2);
+  color: white;
+  border-color: var(--gold2);
+  font-weight: 600;
+}
+.page-btn:disabled { opacity: .4; cursor: not-allowed; }
+.page-ellipsis { color: var(--gray); padding: 0 4px; }
+.pagination-info {
+  color: var(--gray);
+  font-size: 11px;
+  padding: 0 8px;
+}
+
+/* ── Controles de finanzas (búsqueda + orden) ── */
+.fin-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+.fin-controls input { flex: 1; min-width: 150px; }
+.sort-btn {
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--cream2);
+  background: var(--white);
+  color: var(--gray);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+  font-family: 'Jost', sans-serif;
+}
+.sort-btn:hover, .sort-btn.active {
+  border-color: var(--gold2);
+  color: var(--gold2);
+  background: rgba(190,154,102,.08);
 }
 
 /* ── Card ── */

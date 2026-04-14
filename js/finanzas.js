@@ -9,33 +9,121 @@ async function renderFinanzasSection() {
   renderGeneral();
 }
 
-// ── Tabla ──
+// ── Tabla con búsqueda, ordenamiento y paginación ──
 
 function renderFin() {
   const tbody = document.getElementById('finTable');
   let items   = [...cache.finances];
+
+  // Filtro por tipo
   if (finFilter !== 'todos') items = items.filter(f => f.type === finFilter);
 
-  if (!items.length) {
+  // Búsqueda por descripción, categoría o notas
+  const q = (document.getElementById('finSearch')?.value || '').toLowerCase().trim();
+  if (q) items = items.filter(f =>
+    (f.description || '').toLowerCase().includes(q) ||
+    (f.category    || '').toLowerCase().includes(q) ||
+    (f.notes       || '').toLowerCase().includes(q)
+  );
+
+  // Ordenamiento
+  items.sort((a, b) => {
+    const va = finSort.col === 'amount' ? (a.amount || 0) : (a.date || '');
+    const vb = finSort.col === 'amount' ? (b.amount || 0) : (b.date || '');
+    if (va === vb) return 0;
+    return finSort.asc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+  });
+
+  // Paginación
+  const total      = items.length;
+  const totalPages = Math.max(1, Math.ceil(total / FIN_PAGE_SIZE));
+  if (finPage > totalPages) finPage = 1;
+  const start     = (finPage - 1) * FIN_PAGE_SIZE;
+  const pageItems = items.slice(start, start + FIN_PAGE_SIZE);
+
+  // Render filas
+  if (!pageItems.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin movimientos registrados</td></tr>';
+  } else {
+    tbody.innerHTML = pageItems.map(f => `
+      <tr>
+        <td>${fmtDate(f.date)}</td>
+        <td>${f.description}</td>
+        <td style="color:var(--gray);font-size:12px">${f.category}</td>
+        <td><span class="badge badge-${f.type}">${f.type}</span></td>
+        <td style="font-weight:500;color:${f.type==='ingreso'?'var(--green)':'var(--red)'}">${fmt(f.amount)}</td>
+        <td style="display:flex;gap:4px">
+          <button class="btn btn-sm"            onclick="editFin('${f.id}')">✎</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFin('${f.id}')">✕</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  // Render paginación
+  renderFinPagination(totalPages, total);
+  // Actualizar botones de orden
+  updateFinSortBtns();
+}
+
+function renderFinPagination(totalPages, total) {
+  const el = document.getElementById('finPagination');
+  if (!el) return;
+
+  if (totalPages <= 1) {
+    el.innerHTML = total > 0
+      ? `<div class="pagination-info">${total} registro${total !== 1 ? 's' : ''}</div>`
+      : '';
     return;
   }
-  tbody.innerHTML = items.map(f => `
-    <tr>
-      <td>${fmtDate(f.date)}</td>
-      <td>${f.description}</td>
-      <td style="color:var(--gray);font-size:12px">${f.category}</td>
-      <td><span class="badge badge-${f.type}">${f.type}</span></td>
-      <td style="font-weight:500;color:${f.type==='ingreso'?'var(--green)':'var(--red)'}">${fmt(f.amount)}</td>
-      <td style="display:flex;gap:4px">
-        <button class="btn btn-sm"            onclick="editFin('${f.id}')">✎</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteFin('${f.id}')">✕</button>
-      </td>
-    </tr>`).join('');
+
+  let html = `<div class="pagination">`;
+  html += `<button class="page-btn" onclick="goFinPage(${finPage - 1})" ${finPage <= 1 ? 'disabled' : ''}>‹</button>`;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - finPage) <= 1) {
+      html += `<button class="page-btn${i === finPage ? ' active' : ''}" onclick="goFinPage(${i})">${i}</button>`;
+    } else if (Math.abs(i - finPage) === 2) {
+      html += `<span class="page-ellipsis">…</span>`;
+    }
+  }
+
+  html += `<button class="page-btn" onclick="goFinPage(${finPage + 1})" ${finPage >= totalPages ? 'disabled' : ''}>›</button>`;
+  html += `<span class="pagination-info">${total} registros</span>`;
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+function goFinPage(p) {
+  const totalPages = Math.max(1, Math.ceil(cache.finances.length / FIN_PAGE_SIZE));
+  finPage = Math.max(1, Math.min(p, totalPages));
+  renderFin();
+}
+
+function setFinSort(col) {
+  if (finSort.col === col) {
+    finSort.asc = !finSort.asc;
+  } else {
+    finSort.col = col;
+    finSort.asc = false;
+  }
+  finPage = 1;
+  renderFin();
+}
+
+function updateFinSortBtns() {
+  ['date', 'amount'].forEach(col => {
+    const el = document.getElementById(`finSort_${col}`);
+    if (!el) return;
+    const label = col === 'date' ? 'Fecha' : 'Monto';
+    const arrow = finSort.col === col ? (finSort.asc ? ' ↑' : ' ↓') : ' ↕';
+    el.textContent = label + arrow;
+    el.classList.toggle('active', finSort.col === col);
+  });
 }
 
 function setFinFilter(f, btn) {
   finFilter = f;
+  finPage   = 1;
   document.querySelectorAll('#finanzas .filter-row .filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderFin();
@@ -44,7 +132,7 @@ function setFinFilter(f, btn) {
 // ── Guardar ──
 
 async function saveFin() {
-  const description = document.getElementById('finDesc').value.trim();
+  const description = capitalize(document.getElementById('finDesc').value.trim());
   const amount      = +document.getElementById('finAmount').value || 0;
   const date        = document.getElementById('finDate').value;
   if (!description || !amount || !date) { toast('Completa todos los campos', 'error'); return; }
@@ -56,7 +144,7 @@ async function saveFin() {
       type:        document.getElementById('finType').value,
       description, amount, date,
       category:    document.getElementById('finCategory').value,
-      notes:       document.getElementById('finNotes').value.trim(),
+      notes:       capitalize(document.getElementById('finNotes').value.trim()),
     });
     closeModal('finModal');
     await renderFinanzasSection();

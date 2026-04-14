@@ -25,10 +25,10 @@ async function renderServices() {
 }
 
 async function saveSvc() {
-  const name  = document.getElementById('svcName').value.trim();
+  const name  = capitalize(document.getElementById('svcName').value.trim());
   const price = +document.getElementById('svcPrice').value    || 0;
   const dur   = +document.getElementById('svcDuration').value || 0;
-  const desc  = document.getElementById('svcDesc').value.trim();
+  const desc  = capitalize(document.getElementById('svcDesc').value.trim());
   if (!name) { toast('Ingresa el nombre del servicio', 'error'); return; }
 
   setLoading(true);

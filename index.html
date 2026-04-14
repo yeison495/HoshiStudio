@@ -7,6 +7,8 @@
 
   <!-- Supabase JS (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- bcryptjs para encriptación de contraseñas -->
+  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
 
   <!-- Estilos -->
   <link rel="stylesheet" href="css/base.css"/>
@@ -19,9 +21,32 @@
 <div id="globalLoader"><div class="loader-ring"></div></div>
 
 <!-- ══════════════════════════════════════
+     LOGIN OVERLAY
+     ══════════════════════════════════════ -->
+<div id="loginOverlay" style="display:flex">
+  <div class="login-card">
+    <div class="login-brand">Hoshi <span>Studio</span></div>
+    <div class="login-tagline">Arte &amp; Belleza ✦</div>
+    <div class="form-group">
+      <label>Usuario</label>
+      <input id="loginUser" type="text" placeholder="Tu usuario" autocomplete="username"/>
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <div id="loginError" class="login-error" style="display:none"></div>
+    <button class="btn btn-gold" id="loginBtn" onclick="login()" style="width:100%;padding:12px;font-size:14px;margin-top:4px">
+      Ingresar
+    </button>
+    <div class="login-footer">© 2026 Hoshi Studio</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
      NAVEGACIÓN
      ══════════════════════════════════════ -->
-<nav>
+<nav style="display:none">
   <div class="nav-brand">Hoshi <span>Studio</span></div>
   <div class="nav-tabs">
     <button class="nav-tab active"  onclick="showSection('dashboard')">Inicio</button>
@@ -30,10 +55,13 @@
     <button class="nav-tab"         onclick="showSection('clientes')">Clientes</button>
     <button class="nav-tab"         onclick="showSection('finanzas')">Finanzas</button>
   </div>
-  <div class="nav-date" id="navDate"></div>
+  <div class="nav-right">
+    <div class="nav-date" id="navDate"></div>
+    <button class="btn-logout" onclick="logout()" title="Cerrar sesión">Salir ↩</button>
+  </div>
 </nav>
 
-<main>
+<main id="mainApp" style="display:none">
 
   <!-- ══════ DASHBOARD ══════ -->
   <div class="section active" id="dashboard">
@@ -112,24 +140,24 @@
       <div class="section-h1">Clientes</div>
       <div style="display:flex;gap:8px;">
         <input id="clientSearch" placeholder="Buscar cliente..." style="width:200px" oninput="renderClients()"/>
-        <button class="btn btn-gold" onclick="openClientModal()">+ Nueva cliente</button>
+        <button class="btn btn-gold" onclick="openClientModal()">+ Nuevo cliente</button>
       </div>
     </div>
     <div class="clients-layout">
       <div>
         <div id="loyaltyAlerts" style="margin-bottom:16px;"></div>
         <div class="filter-row">
-          <button class="filter-btn active" onclick="setClientFilter('todas',this)">Todas</button>
+          <button class="filter-btn active" onclick="setClientFilter('todas',this)">Todos</button>
           <button class="filter-btn"        onclick="setClientFilter('vip',this)">VIP (3+ citas)</button>
           <button class="filter-btn"        onclick="setClientFilter('alerta',this)">Sin visita +30 días</button>
           <button class="filter-btn"        onclick="setClientFilter('cumple',this)">Cumpleaños este mes</button>
         </div>
-        <div class="client-grid" id="clientGrid"><div class="empty-state" style="grid-column:1/-1">Sin clientas</div></div>
+        <div class="client-grid" id="clientGrid"><div class="empty-state" style="grid-column:1/-1">Sin clientes</div></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:14px;">
         <div class="week-summary">
           <div class="week-title">✦ Fidelización</div>
-          <div class="week-row"><span class="wlabel">Total clientas</span>      <span class="wval"     id="fl-total">0</span></div>
+          <div class="week-row"><span class="wlabel">Total clientes</span>      <span class="wval"     id="fl-total">0</span></div>
           <div class="week-row"><span class="wlabel">VIP (3+ citas)</span>      <span class="wval gold" id="fl-vip">0</span></div>
           <div class="week-row"><span class="wlabel">Sin visita +30d</span>     <span class="wval neg"  id="fl-alerta">0</span></div>
           <div class="week-row"><span class="wlabel">Cumpleaños este mes</span> <span class="wval pos"  id="fl-cumple">0</span></div>
@@ -139,8 +167,8 @@
           <div id="birthdayList"><div class="empty-state" style="padding:20px">Sin cumpleaños</div></div>
         </div>
         <div class="card">
-          <div class="card-title">Clientas a recuperar</div>
-          <div id="recoverList"><div class="empty-state" style="padding:20px">¡Todas al día!</div></div>
+          <div class="card-title">Clientes a recuperar</div>
+          <div id="recoverList"><div class="empty-state" style="padding:20px">¡Todos al día!</div></div>
         </div>
       </div>
     </div>
@@ -160,12 +188,20 @@
           <button class="filter-btn"        onclick="setFinFilter('ingreso',this)">Ingresos</button>
           <button class="filter-btn"        onclick="setFinFilter('salida',this)">Salidas</button>
         </div>
+        <!-- Búsqueda y ordenamiento -->
+        <div class="fin-controls">
+          <input id="finSearch" placeholder="🔍 Buscar movimiento..." oninput="finPage=1;renderFin()"/>
+          <button class="sort-btn" id="finSort_date"   onclick="setFinSort('date')">Fecha ↕</button>
+          <button class="sort-btn" id="finSort_amount" onclick="setFinSort('amount')">Monto ↕</button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Tipo</th><th>Monto</th><th></th></tr></thead>
             <tbody id="finTable"><tr><td colspan="6" class="empty-state">Sin movimientos</td></tr></tbody>
           </table>
         </div>
+        <!-- Paginación -->
+        <div id="finPagination"></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:14px;">
         <div class="week-summary">
@@ -201,7 +237,7 @@
   <div class="modal-title">Nueva cita</div>
   <input type="hidden" id="apptEditId"/>
   <div class="form-grid">
-    <div class="form-group full"><label>Clienta registrada</label>
+    <div class="form-group full"><label>Cliente registrado</label>
       <select id="apptClientId" onchange="apptClientSelected()"><option value="">— Seleccionar (opcional) —</option></select></div>
     <div class="form-group"><label>Nombre</label>   <input id="apptClient" placeholder="Nombre"/></div>
     <div class="form-group"><label>Teléfono</label> <input id="apptPhone"  placeholder="Opcional"/></div>
@@ -236,14 +272,47 @@
   </div>
 </div></div>
 
-<!-- Clienta -->
+<!-- Cliente -->
 <div class="modal-overlay" id="clientModal"><div class="modal" style="max-width:500px">
-  <div class="modal-title">Nueva clienta</div>
+  <div class="modal-title">Nuevo cliente</div>
   <input type="hidden" id="clientEditId"/>
   <div class="form-grid">
     <div class="form-group full"><label>Nombre completo</label>     <input id="clientName"     placeholder="Nombre"/></div>
     <div class="form-group"><label>Teléfono / WhatsApp</label>      <input id="clientPhone"    placeholder="+57 300..."/></div>
-    <div class="form-group"><label>Fecha de cumpleaños</label>      <input type="date" id="clientBirthday"/></div>
+    <div class="form-group">
+      <label>Fecha de cumpleaños</label>
+      <div style="display:flex;gap:8px;">
+        <select id="clientBirthdayMonth" style="flex:1">
+          <option value="">Mes</option>
+          <option value="01">Enero</option>
+          <option value="02">Febrero</option>
+          <option value="03">Marzo</option>
+          <option value="04">Abril</option>
+          <option value="05">Mayo</option>
+          <option value="06">Junio</option>
+          <option value="07">Julio</option>
+          <option value="08">Agosto</option>
+          <option value="09">Septiembre</option>
+          <option value="10">Octubre</option>
+          <option value="11">Noviembre</option>
+          <option value="12">Diciembre</option>
+        </select>
+        <select id="clientBirthdayDay" style="flex:1">
+          <option value="">Día</option>
+          <option value="01">1</option><option value="02">2</option><option value="03">3</option>
+          <option value="04">4</option><option value="05">5</option><option value="06">6</option>
+          <option value="07">7</option><option value="08">8</option><option value="09">9</option>
+          <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+          <option value="13">13</option><option value="14">14</option><option value="15">15</option>
+          <option value="16">16</option><option value="17">17</option><option value="18">18</option>
+          <option value="19">19</option><option value="20">20</option><option value="21">21</option>
+          <option value="22">22</option><option value="23">23</option><option value="24">24</option>
+          <option value="25">25</option><option value="26">26</option><option value="27">27</option>
+          <option value="28">28</option><option value="29">29</option><option value="30">30</option>
+          <option value="31">31</option>
+        </select>
+      </div>
+    </div>
     <div class="form-group full"><label>Correo</label>              <input id="clientEmail"    type="email" placeholder="Opcional"/></div>
     <div class="form-group full"><label>Servicio favorito</label>
       <select id="clientFavService"><option value="">— Selecciona —</option></select></div>
@@ -256,7 +325,7 @@
   </div>
 </div></div>
 
-<!-- Detalle clienta -->
+<!-- Detalle cliente -->
 <div class="modal-overlay" id="clientDetailModal"><div class="modal" style="max-width:520px">
   <div class="modal-title" id="cdTitle"></div>
   <div id="cdContent"></div>
@@ -319,8 +388,9 @@
 <script src="js/config.js"></script>   <!-- 1. Credenciales + cliente db -->
 <script src="js/state.js"></script>    <!-- 2. Estado UI + utilidades    -->
 <script src="js/db.js"></script>       <!-- 3. Operaciones Supabase       -->
-<script src="js/ui.js"></script>       <!-- 4. Nav, modales, toast        -->
-<script src="js/dashboard.js"></script><!-- 5. Módulos                    -->
+<script src="js/auth.js"></script>     <!-- 4. Login / logout             -->
+<script src="js/ui.js"></script>       <!-- 5. Nav, modales, toast        -->
+<script src="js/dashboard.js"></script><!-- 6. Módulos                    -->
 <script src="js/agenda.js"></script>
 <script src="js/servicios.js"></script>
 <script src="js/clientes.js"></script>
@@ -329,19 +399,24 @@
 <script>
   // ── Arranque ──
   updateNavDate();
-  (async () => {
-    setLoading(true);
-    try {
-      await Promise.all([dbGetServices(), dbGetClients(), dbGetAppointments(), dbGetFinances()]);
-      await renderDashboard();
-    } catch(e) {
-      document.getElementById('kpiGrid').innerHTML =
-        '<div style="color:var(--red);padding:20px;font-size:13px">⚠ No se pudo conectar con Supabase. Verifica las credenciales en <code>js/config.js</code></div>';
-      console.error('Supabase connection error:', e);
-    } finally {
-      setLoading(false);
-    }
-  })();
+  checkAuth(); // Muestra login si no hay sesión activa
+
+  // Si ya hay sesión (recarga de página), cargar datos
+  if (isAuthenticated()) {
+    (async () => {
+      setLoading(true);
+      try {
+        await Promise.all([dbGetServices(), dbGetClients(), dbGetAppointments(), dbGetFinances()]);
+        await renderDashboard();
+      } catch(e) {
+        document.getElementById('kpiGrid').innerHTML =
+          '<div style="color:var(--red);padding:20px;font-size:13px">⚠ No se pudo conectar con Supabase. Verifica las credenciales en <code>js/config.js</code></div>';
+        console.error('Supabase connection error:', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }
 </script>
 
 </body>

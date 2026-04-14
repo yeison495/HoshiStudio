@@ -3,7 +3,7 @@
    ══════════════════════════════════════ */
 
 async function renderAgenda() {
-  await dbGetAppointments(); // refresca cache
+  await dbGetAppointments();
   await dbGetClients();
   await dbGetServices();
   renderCal();
@@ -19,10 +19,10 @@ function renderCal() {
     .toLocaleString('es-CO', { month: 'long', year: 'numeric' })
     .replace(/^\w/, c => c.toUpperCase());
 
-  const firstDay   = new Date(y, m, 1).getDay();
+  const firstDay    = new Date(y, m, 1).getDay();
   const daysInMonth = new Date(y, m + 1, 0).getDate();
-  const todayStr   = today();
-  const headers    = ['Do','Lu','Ma','Mi','Ju','Vi','Sa'];
+  const todayStr    = today();
+  const headers     = ['Do','Lu','Ma','Mi','Ju','Vi','Sa'];
 
   let html = headers.map(d => `<div class="cal-day-header">${d}</div>`).join('');
   for (let i = 0; i < firstDay; i++) html += `<div class="cal-day other-month"></div>`;
@@ -100,15 +100,20 @@ function renderAllAppts() {
 // ── Guardar cita ──
 
 async function saveAppt() {
-  const client_name = document.getElementById('apptClient').value.trim();
+  const client_name = capitalize(document.getElementById('apptClient').value.trim());
   const date        = document.getElementById('apptDate').value;
   if (!client_name || !date) { toast('Completa nombre y fecha', 'error'); return; }
 
-  const svcId = document.getElementById('apptService').value;
-  const svc   = cache.services.find(s => s.id === svcId);
+  const svcId  = document.getElementById('apptService').value;
+  const svc    = cache.services.find(s => s.id === svcId);
+  const apptId = document.getElementById('apptEditId').value || null;
+
+  // Detectar estado anterior (para auto-registro en finanzas)
+  const prevAppt   = apptId ? cache.appointments.find(a => a.id === apptId) : null;
+  const prevStatus = prevAppt?.status || null;
 
   const payload = {
-    id:           document.getElementById('apptEditId').value || null,
+    id:           apptId,
     client_id:    document.getElementById('apptClientId').value || null,
     client_name,
     phone:        document.getElementById('apptPhone').value.trim(),
@@ -118,12 +123,28 @@ async function saveAppt() {
     time:         document.getElementById('apptTime').value || null,
     status:       document.getElementById('apptStatus').value,
     price:        +document.getElementById('apptPrice').value || (svc ? svc.price : 0),
-    notes:        document.getElementById('apptNotes').value.trim(),
+    notes:        capitalize(document.getElementById('apptNotes').value.trim()),
   };
 
   setLoading(true);
   try {
     await dbSaveAppointment(payload);
+
+    // ── Auto-registro en Finanzas al completar cita ──
+    const isNowCompleted  = payload.status === 'completada';
+    const wasCompleted    = prevStatus === 'completada';
+    if (isNowCompleted && !wasCompleted && payload.price > 0) {
+      await dbSaveFinance({
+        id:          null,
+        type:        'ingreso',
+        description: `Cita completada — ${client_name}`,
+        amount:      payload.price,
+        category:    'servicio',
+        date:        date,
+        notes:       payload.service_name ? `Servicio: ${payload.service_name}` : '',
+      });
+    }
+
     closeModal('apptModal');
     await renderAgenda();
     await renderDashboard();
