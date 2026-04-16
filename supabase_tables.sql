@@ -103,15 +103,29 @@ CREATE TABLE IF NOT EXISTS users (
 -- ══════════════════════════════════════════════════════
 --  SEGURIDAD: Row Level Security (RLS)
 -- ══════════════════════════════════════════════════════
--- Nota: El login de la app protege el acceso a nivel de
--- interfaz. El RLS de Supabase funciona óptimamente con
--- Supabase Auth (JWT). Con tabla 'users' personalizada,
--- se mantiene la protección a nivel de aplicación.
--- Si deseas activar RLS con Supabase Auth en el futuro,
--- migra la autenticación a supabase.auth.signInWithPassword().
+-- RLS está HABILITADO en todas las tablas.
+-- Las políticas permiten acceso desde la anon key
+-- (necesario para que la app funcione desde el navegador).
+-- La protección principal es el login de la interfaz.
+--
+-- Para mayor seguridad en el futuro, migrar auth a:
+--   supabase.auth.signInWithPassword()
+-- y usar políticas basadas en auth.uid().
 
-ALTER TABLE services     DISABLE ROW LEVEL SECURITY;
-ALTER TABLE clients      DISABLE ROW LEVEL SECURITY;
-ALTER TABLE appointments DISABLE ROW LEVEL SECURITY;
-ALTER TABLE finances     DISABLE ROW LEVEL SECURITY;
-ALTER TABLE users        DISABLE ROW LEVEL SECURITY;
+ALTER TABLE services     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clients      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE finances     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users        ENABLE ROW LEVEL SECURITY;
+
+-- Acceso completo para tablas operativas (desde anon key)
+CREATE POLICY "anon_all_services"     ON services     FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all_clients"      ON clients      FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all_appointments" ON appointments FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all_finances"     ON finances     FOR ALL TO anon USING (true) WITH CHECK (true);
+
+-- Tabla users: solo lectura desde anon (para el login)
+CREATE POLICY "anon_select_users"    ON users FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_no_insert_users" ON users FOR INSERT TO anon WITH CHECK (false);
+CREATE POLICY "anon_no_update_users" ON users FOR UPDATE TO anon USING (false);
+CREATE POLICY "anon_no_delete_users" ON users FOR DELETE TO anon USING (false);
