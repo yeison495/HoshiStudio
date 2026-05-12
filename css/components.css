@@ -351,6 +351,70 @@ td {
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: rgba(201,168,76,0.04); }
 
+/* ── Fila cita clickeable ── */
+.appt-row { cursor: pointer; transition: background .15s; }
+.appt-row:hover td { background: rgba(201,168,76,0.08) !important; }
+
+/* ── Icono de estado (punto pequeño) ── */
+.status-dot {
+  font-size: 11px;
+  margin-right: 5px;
+  vertical-align: middle;
+  opacity: 0.85;
+}
+
+/* ── Badge de estado clickeable en detalle ── */
+.status-badge-pill {
+  cursor: pointer;
+  user-select: none;
+  transition: opacity .15s, transform .1s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.status-badge-pill:hover { opacity: .8; transform: scale(1.04); }
+
+/* ── Select rápido de estado ── */
+.status-quick-select {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--gold);
+  background: var(--cream);
+  color: var(--black);
+  cursor: pointer;
+  width: auto;
+  font-family: 'Jost', sans-serif;
+}
+
+/* ── Botón completar cita (modal detalle, ancho completo) ── */
+.btn-complete-full {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 11px 0;
+  border-radius: 8px;
+  border: 1.5px solid rgba(90,158,111,0.5);
+  background: rgba(90,158,111,0.09);
+  color: #4a8c5f;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Jost', sans-serif;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-complete-full:hover {
+  background: #5a9e6f;
+  color: white;
+  border-color: #5a9e6f;
+  box-shadow: 0 4px 14px rgba(90,158,111,0.3);
+  transform: translateY(-1px);
+}
+
 /* ── Badges ── */
 .badge {
   display: inline-block;

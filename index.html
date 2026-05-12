@@ -116,8 +116,8 @@
           <div class="card-title">Todas las citas</div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Fecha</th><th>Cliente</th><th>Servicio</th><th>Estado</th><th></th></tr></thead>
-              <tbody id="allApptTable"><tr><td colspan="5" class="empty-state">Sin citas</td></tr></tbody>
+              <thead><tr><th>Cliente</th><th>Servicio</th></tr></thead>
+              <tbody id="allApptTable"><tr><td colspan="2" class="empty-state">Sin citas</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -246,13 +246,7 @@
     <div class="form-group full"><label>Servicio</label>
       <select id="apptService"><option value="">— Selecciona servicio —</option></select></div>
     <div class="form-group full"><label>Notas</label><textarea id="apptNotes" placeholder="Observaciones..."></textarea></div>
-    <div class="form-group"><label>Estado</label>
-      <select id="apptStatus">
-        <option value="pendiente">Pendiente</option>
-        <option value="confirmada">Confirmada</option>
-        <option value="completada">Completada</option>
-        <option value="cancelada">Cancelada</option>
-      </select></div>
+    <!-- Estado gestionado desde el detalle de la cita -->
     <div class="form-group"><label>Valor ($)</label><input type="number" id="apptPrice" placeholder="0"/></div>
   </div>
   <div class="modal-actions">
