@@ -129,6 +129,31 @@ nav {
   margin-top: 4px;
 }
 
+/* ── Password eye toggle ── */
+.pass-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.pass-wrap input {
+  padding-right: 40px; /* espacio para el botón ojo */
+}
+.pass-eye {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--gray);
+  display: flex;
+  align-items: center;
+  transition: color .15s;
+  width: auto;
+  height: auto;
+}
+.pass-eye:hover { color: var(--gold2); }
+
 /* ── Botón WhatsApp ── */
 .btn-whatsapp {
   display: inline-flex;
@@ -554,3 +579,160 @@ tr:hover td { background: rgba(201,168,76,0.04); }
 
 /* ── Toast error ── */
 .toast.error { background: var(--red); color: #fff; border-color: #a04438; }
+
+/* ══════════════════════════════════════
+   RESPONSIVE — Menú hamburguesa + Modal
+   ══════════════════════════════════════ */
+
+/* ── Botón hamburguesa (oculto en desktop) ── */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+  transition: border-color .2s;
+  flex-shrink: 0;
+}
+.hamburger:hover { border-color: var(--gold); }
+.hamburger span {
+  display: block;
+  width: 18px;
+  height: 1.5px;
+  background: rgba(255,255,255,0.75);
+  border-radius: 2px;
+  transition: all .25s;
+  transform-origin: center;
+}
+/* Animación → X cuando está abierto */
+.hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+/* ── Drawer menú móvil ── */
+.nav-mobile-menu {
+  display: none;           /* Visible sólo en mobile vía media query */
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  background: var(--black);
+  border-bottom: 1px solid #333;
+  z-index: 99;
+  flex-direction: column;
+  padding: 8px 0;
+  transform: translateY(-8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .25s, opacity .25s;
+}
+.nav-mobile-menu.open {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+.nav-mobile-tab {
+  background: none;
+  border: none;
+  color: var(--gray);
+  font-family: 'Jost', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 13px 24px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background .15s, color .15s;
+  border-left: 3px solid transparent;
+}
+.nav-mobile-tab:hover {
+  background: rgba(201,168,76,0.08);
+  color: var(--gold-light);
+  border-left-color: var(--gold);
+}
+
+/* ── Media queries ── */
+@media (max-width: 700px) {
+  /* Mostrar hamburguesa, ocultar tabs inline */
+  .hamburger { display: flex; }
+  .nav-tabs  { display: none; }
+  .nav-date  { display: none; }
+  .nav-mobile-menu { display: flex; }
+
+  /* Nav más compacto */
+  nav { padding: 0 16px; height: 56px; }
+  .nav-mobile-menu { top: 56px; }
+
+  /* Modal: full-screen bottom-sheet en móvil */
+  .modal-overlay {
+    align-items: flex-end;
+  }
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    padding: 20px 16px 32px;
+    max-height: 92vh;
+    transform: translateY(40px);
+  }
+  .modal-overlay.open .modal {
+    transform: translateY(0);
+  }
+
+  /* Acciones del modal: columna invertida en pantallas pequeñas */
+  .modal-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .modal-actions .btn {
+    flex: 1 1 auto;
+    text-align: center;
+    min-width: 80px;
+  }
+
+  /* Sección header vertical */
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  /* Búsqueda de clientes */
+  #clientSearch { width: 100% !important; }
+
+  /* Main con padding más pequeño */
+  main { padding: 16px 12px; }
+}
+
+@media (max-width: 480px) {
+  /* form-grid 1 columna */
+  .form-grid { grid-template-columns: 1fr; }
+
+  /* Section-h1 más pequeño */
+  .section-h1 { font-size: 22px; }
+
+  /* KPI en 1 columna */
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+
+  /* Toast en móvil: abajo al centro */
+  .toast {
+    left: 12px;
+    right: 12px;
+    bottom: 16px;
+    text-align: center;
+  }
+
+  /* Controles finanzas */
+  .fin-controls { flex-direction: column; }
+  .fin-controls input { width: 100%; }
+}
+

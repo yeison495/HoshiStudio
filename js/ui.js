@@ -141,3 +141,27 @@ function updateNavDate() {
     .toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })
     .replace(/^\w/, c => c.toUpperCase());
 }
+
+// ── Menú hamburguesa (móvil) ──
+
+function toggleNavMenu() {
+  const menu = document.getElementById('navMobileMenu');
+  const btn   = document.getElementById('hamburgerBtn');
+  const open  = menu.classList.toggle('open');
+  btn.classList.toggle('open', open);
+}
+
+function closeNavMenu() {
+  document.getElementById('navMobileMenu').classList.remove('open');
+  document.getElementById('hamburgerBtn').classList.remove('open');
+}
+
+// Cierra el menú al hacer clic fuera de él
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('navMobileMenu');
+  const btn  = document.getElementById('hamburgerBtn');
+  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.classList.remove('open');
+    btn.classList.remove('open');
+  }
+});

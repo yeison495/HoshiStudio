@@ -279,3 +279,52 @@
   gap: 16px;
 }
 @media (max-width: 750px) { .fin-layout { grid-template-columns: 1fr; } }
+
+/* Tabla finanzas responsive: ocultar columnas menos importantes en móvil */
+@media (max-width: 600px) {
+  /* Ocultar columna Categoría y Tipo en pantallas pequeñas */
+  #finanzas table thead tr th:nth-child(3),
+  #finanzas table thead tr th:nth-child(4),
+  #finanzas table tbody tr td:nth-child(3),
+  #finanzas table tbody tr td:nth-child(4) {
+    display: none;
+  }
+
+  /* Reducir padding de celdas */
+  #finanzas table th,
+  #finanzas table td {
+    padding: 8px 8px;
+    font-size: 12px;
+  }
+
+  /* Monto en negrita */
+  #finanzas table td:nth-child(5) {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* Fecha más compacta */
+  #finanzas table td:nth-child(1) {
+    white-space: nowrap;
+    font-size: 11px;
+    color: var(--gray);
+  }
+
+  /* Descripción con truncado */
+  #finanzas table td:nth-child(2) {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Botones de acción más compactos */
+  #finanzas table td:nth-child(6) {
+    padding: 4px 4px;
+    white-space: nowrap;
+  }
+  #finanzas table td:nth-child(6) .btn {
+    padding: 4px 7px;
+    font-size: 11px;
+  }
+}

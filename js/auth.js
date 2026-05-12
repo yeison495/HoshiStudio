@@ -118,6 +118,22 @@ function _setLoginError(msg) {
 // Para crear la contraseña de un usuario, abre la consola del navegador y ejecuta:
 //   generarHash('mi_contraseña').then(h => console.log(h))
 // Luego guarda ese hash en Supabase: INSERT INTO users (username, password) VALUES ('viviana', '<hash>');
+
+// ── Toggle mostrar/ocultar contraseña ──
+function togglePass() {
+  const inp  = document.getElementById('loginPass');
+  const show = document.getElementById('eyeIconShow');
+  const hide = document.getElementById('eyeIconHide');
+  if (inp.type === 'password') {
+    inp.type       = 'text';
+    show.style.display = 'none';
+    hide.style.display = '';
+  } else {
+    inp.type       = 'password';
+    show.style.display = '';
+    hide.style.display = 'none';
+  }
+}
 async function generarHash(pwd) {
   const bc = _bc();
   return new Promise((res, rej) => bc.hash(pwd, 10, (err, h) => err ? rej(err) : res(h)));
