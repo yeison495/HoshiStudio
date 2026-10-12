@@ -123,7 +123,19 @@
 .cal-day.today        { background: var(--black); color: var(--cream); font-weight: 500; }
 .cal-day.today:hover  { background: var(--black2); }
 .cal-day.selected     { background: rgba(201,168,76,0.2); border: 1px solid var(--gold); }
-.cal-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }
+.cal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+.cal-appt {
+  display: flex; align-items: center; gap: 2px;
+  max-width: 100%; padding: 0 2px;
+  font-size: 9px; line-height: 1.2;
+}
+.cal-appt-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.cal-appt-more { font-weight: 600; color: var(--gold2); flex-shrink: 0; }
+.cal-day.today .cal-appt-more { color: var(--gold); }
+@media (max-width: 480px) {
+  .cal-day  { aspect-ratio: auto; min-height: 44px; }
+  .cal-appt { font-size: 8px; }
+}
 
 /* ── Servicios ── */
 .service-grid {
@@ -259,6 +271,19 @@
   text-transform: uppercase; color: var(--gray);
 }
 .client-detail-value { font-weight: 500; }
+
+/* Regalo de cumpleaños */
+.birthday-gift-box {
+  background: rgba(201,168,76,0.08);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 8px; padding: 10px 14px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.gift-check {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; cursor: pointer;
+}
+.gift-check input { accent-color: var(--gold); width: 16px; height: 16px; cursor: pointer; }
 
 /* Timeline de visitas */
 .timeline { display: flex; flex-direction: column; gap: 0; margin-top: 8px; }

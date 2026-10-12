@@ -161,6 +161,9 @@ function showClientDetail(id) {
   const bday         = fmtBirthday(c.birthday);
   const dub          = daysUntilBirthday(c.birthday);
   const waNr         = formatWhatsApp(c.phone);
+  const currentYear  = new Date().getFullYear();
+  const bonoEntregado = c.bono_entregado_year === currentYear;
+  const bonoRedimido  = c.bono_redimido_year  === currentYear;
 
   // Resumen de servicios agendados (con conteo)
   const svcSummary = {};
@@ -195,6 +198,17 @@ function showClientDetail(id) {
         <div class="client-detail-item"><span class="client-detail-label">Última visita</span><span class="client-detail-value">${dsvText}</span></div>
         <div class="client-detail-item"><span class="client-detail-label">Cliente desde</span><span class="client-detail-value">${fmtDate(c.created_at)}</span></div>
       </div>
+      <div class="birthday-gift-box">
+        <div class="client-detail-label">🎁 Regalo cumpleaños ${currentYear}</div>
+        <label class="gift-check">
+          <input type="checkbox" ${bonoEntregado ? 'checked' : ''} onchange="toggleBono('bono_entregado_year', this)">
+          Bono entregado
+        </label>
+        <label class="gift-check">
+          <input type="checkbox" ${bonoRedimido ? 'checked' : ''} onchange="toggleBono('bono_redimido_year', this)">
+          Bono redimido
+        </label>
+      </div>
       ${c.allergies ? `<div><div class="client-detail-label" style="margin-bottom:4px">Alergias</div><div style="background:rgba(140,58,46,0.06);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--red)">${c.allergies}</div></div>` : ''}
       ${c.notes     ? `<div><div class="client-detail-label" style="margin-bottom:4px">Notas</div><div style="background:var(--cream);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--gray)">${c.notes}</div></div>` : ''}
       ${svcList.length ? `
@@ -222,6 +236,25 @@ function showClientDetail(id) {
     </div>`;
 
   openModal('clientDetailModal');
+}
+
+// ── Bono de cumpleaños ──
+// Se guarda el año en que se marcó; al cambiar de año el checkbox aparece desmarcado solo.
+
+async function toggleBono(field, checkbox) {
+  const c = cache.clients.find(x => x.id === currentClientId);
+  if (!c) return;
+  const value = checkbox.checked ? new Date().getFullYear() : null;
+  checkbox.disabled = true;
+  try {
+    await dbUpdateClientFields(c.id, { [field]: value });
+    c[field] = value;
+    toast('Bono actualizado ✦');
+  } catch(e) {
+    checkbox.checked = !checkbox.checked;
+    toast('Error actualizando bono', 'error');
+    console.error(e);
+  } finally { checkbox.disabled = false; }
 }
 
 // ── Guardar ──

@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS clients (
   fav_service_id UUID REFERENCES services(id) ON DELETE SET NULL,
   allergies      TEXT,
   notes          TEXT,
+  bono_entregado_year INT,    -- Año en que se entregó el bono de cumpleaños
+  bono_redimido_year  INT,    -- Año en que se redimió el bono de cumpleaños
   created_at     TIMESTAMPTZ DEFAULT now()
 );
 
@@ -98,6 +100,14 @@ CREATE TABLE IF NOT EXISTS users (
 --
 -- Los registros existentes quedarán como "YYYY-MM-DD".
 -- El código los maneja y solo muestra día y mes.
+
+-- ── Migración: Bono de cumpleaños ─────────────────────
+-- Guarda el año en que se marcó cada casilla; el checkbox
+-- solo aparece marcado si coincide con el año actual
+-- (se "reinicia" solo cada año).
+--
+-- ALTER TABLE clients ADD COLUMN IF NOT EXISTS bono_entregado_year INT;
+-- ALTER TABLE clients ADD COLUMN IF NOT EXISTS bono_redimido_year  INT;
 
 
 -- ══════════════════════════════════════════════════════
