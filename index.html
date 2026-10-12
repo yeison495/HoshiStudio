@@ -129,13 +129,14 @@
           <ul class="day-appts" id="dayApptList"><li class="empty-state">Sin citas este día</li></ul>
         </div>
         <div class="card" style="margin-top:14px">
-          <div class="card-title">Todas las citas</div>
+          <div class="card-title" id="allApptTitle">Citas del mes</div>
           <div class="table-wrap">
             <table>
               <thead><tr><th>Cliente</th><th>Servicio</th></tr></thead>
               <tbody id="allApptTable"><tr><td colspan="2" class="empty-state">Sin citas</td></tr></tbody>
             </table>
           </div>
+          <div id="apptPagination"></div>
         </div>
       </div>
     </div>
@@ -194,11 +195,14 @@
   <div class="section" id="finanzas">
     <div class="section-header">
       <div class="section-h1">Finanzas</div>
-      <button class="btn btn-gold" onclick="openModal('finModal')">+ Registrar movimiento</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn"          onclick="openFinHistory()">📜 Ver historial</button>
+        <button class="btn btn-gold" onclick="openModal('finModal')">+ Registrar movimiento</button>
+      </div>
     </div>
     <div class="fin-layout">
       <div class="card">
-        <div class="card-title">Movimientos</div>
+        <div class="card-title" id="finTitle">Movimientos del mes</div>
         <div class="filter-row">
           <button class="filter-btn active" onclick="setFinFilter('todos',this)">Todos</button>
           <button class="filter-btn"        onclick="setFinFilter('ingreso',this)">Ingresos</button>
@@ -211,7 +215,7 @@
           <button class="sort-btn" id="finSort_amount" onclick="setFinSort('amount')">Monto ↕</button>
         </div>
         <div class="table-wrap">
-          <table>
+          <table class="fin-table">
             <thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Tipo</th><th>Monto</th><th></th></tr></thead>
             <tbody id="finTable"><tr><td colspan="6" class="empty-state">Sin movimientos</td></tr></tbody>
           </table>
@@ -235,7 +239,7 @@
           <div id="weekResult" style="margin-top:12px;"></div>
         </div>
         <div class="card">
-          <div class="card-title">Resumen general</div>
+          <div class="card-title" id="generalTitle">Resumen del mes</div>
           <div id="generalSummary"></div>
         </div>
       </div>
@@ -363,6 +367,45 @@
 </div></div>
 
 <!-- Movimiento -->
+<!-- Historial de movimientos (va antes de finModal para que editar quede encima) -->
+<div class="modal-overlay" id="finHistoryModal"><div class="modal modal-wide">
+  <div class="modal-title">Historial de movimientos</div>
+  <div class="hist-controls">
+    <select id="histMode" onchange="onHistChange()">
+      <option value="dia">Por día</option>
+      <option value="mes">Por mes</option>
+      <option value="anio">Por año</option>
+    </select>
+    <input type="date" id="histDay" onchange="onHistChange()"/>
+    <select id="histMonth" onchange="onHistChange()">
+      <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+      <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+      <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+      <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+    </select>
+    <input type="number" id="histYear" min="2000" max="2100" placeholder="Año" oninput="onHistChange()"/>
+  </div>
+  <div id="histSummary"></div>
+  <div class="filter-row" id="histFilters">
+    <button class="filter-btn active" onclick="setHistFilter('todos',this)">Todos</button>
+    <button class="filter-btn"        onclick="setHistFilter('ingreso',this)">Ingresos</button>
+    <button class="filter-btn"        onclick="setHistFilter('salida',this)">Salidas</button>
+  </div>
+  <div class="fin-controls">
+    <input id="histSearch" placeholder="🔍 Buscar movimiento..." oninput="histPage=1;renderFinHistory()"/>
+  </div>
+  <div class="table-wrap">
+    <table class="fin-table">
+      <thead><tr><th>Fecha</th><th>Descripción</th><th>Categoría</th><th>Tipo</th><th>Monto</th><th></th></tr></thead>
+      <tbody id="histTable"></tbody>
+    </table>
+  </div>
+  <div id="histPagination"></div>
+  <div class="modal-actions">
+    <button class="btn" onclick="closeModal('finHistoryModal')">Cerrar</button>
+  </div>
+</div></div>
+
 <div class="modal-overlay" id="finModal"><div class="modal">
   <div class="modal-title">Registrar movimiento</div>
   <input type="hidden" id="finEditId"/>
