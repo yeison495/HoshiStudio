@@ -308,35 +308,35 @@
 /* Tabla finanzas responsive: ocultar columnas menos importantes en móvil */
 @media (max-width: 600px) {
   /* Ocultar columna Categoría y Tipo en pantallas pequeñas */
-  #finanzas table thead tr th:nth-child(3),
-  #finanzas table thead tr th:nth-child(4),
-  #finanzas table tbody tr td:nth-child(3),
-  #finanzas table tbody tr td:nth-child(4) {
+  .fin-table thead tr th:nth-child(3),
+  .fin-table thead tr th:nth-child(4),
+  .fin-table tbody tr td:nth-child(3),
+  .fin-table tbody tr td:nth-child(4) {
     display: none;
   }
 
   /* Reducir padding de celdas */
-  #finanzas table th,
-  #finanzas table td {
+  .fin-table th,
+  .fin-table td {
     padding: 8px 8px;
     font-size: 12px;
   }
 
   /* Monto en negrita */
-  #finanzas table td:nth-child(5) {
+  .fin-table td:nth-child(5) {
     font-weight: 600;
     white-space: nowrap;
   }
 
   /* Fecha más compacta */
-  #finanzas table td:nth-child(1) {
+  .fin-table td:nth-child(1) {
     white-space: nowrap;
     font-size: 11px;
     color: var(--gray);
   }
 
   /* Descripción con truncado */
-  #finanzas table td:nth-child(2) {
+  .fin-table td:nth-child(2) {
     max-width: 120px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -344,12 +344,34 @@
   }
 
   /* Botones de acción más compactos */
-  #finanzas table td:nth-child(6) {
+  .fin-table td:nth-child(6) {
     padding: 4px 4px;
     white-space: nowrap;
   }
-  #finanzas table td:nth-child(6) .btn {
+  .fin-table td:nth-child(6) .btn {
     padding: 4px 7px;
     font-size: 11px;
   }
 }
+
+/* Historial de movimientos */
+.modal.modal-wide { max-width: 760px; }
+.hist-controls {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.hist-controls > * { flex: 1 1 140px; width: auto; }
+.hist-summary {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  background: rgba(201,168,76,0.08);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 8px; padding: 10px 14px;
+  margin-bottom: 12px; font-size: 12px;
+}
+.hist-summary .hist-period {
+  grid-column: 1 / -1;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px; font-weight: 600;
+}
+.hist-summary > div:not(.hist-period) { display: flex; flex-direction: column; gap: 2px; }
+.hist-summary span { color: var(--gray); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
