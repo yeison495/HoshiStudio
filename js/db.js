@@ -65,6 +65,11 @@ async function dbSaveClient({ id, name, phone, email, birthday, fav_service_id, 
   }
 }
 
+async function dbUpdateClientFields(id, fields) {
+  const { error } = await db.from('clients').update(fields).eq('id', id);
+  if (error) throw error;
+}
+
 async function dbDeleteClient(id) {
   const { error } = await db.from('clients').delete().eq('id', id);
   if (error) throw error;

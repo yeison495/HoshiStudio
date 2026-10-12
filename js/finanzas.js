@@ -7,45 +7,34 @@ async function renderFinanzasSection() {
   renderFin();
   calcWeekAuto();
   renderGeneral();
+  if (document.getElementById('finHistoryModal').classList.contains('open')) renderFinHistory();
 }
 
-// ── Tabla con búsqueda, ordenamiento y paginación ──
+// ── Filtro, orden y filas (compartidos por el listado del mes y el historial) ──
 
-function renderFin() {
-  const tbody = document.getElementById('finTable');
-  let items   = [...cache.finances];
-
-  // Filtro por tipo
-  if (finFilter !== 'todos') items = items.filter(f => f.type === finFilter);
-
-  // Búsqueda por descripción, categoría o notas
-  const q = (document.getElementById('finSearch')?.value || '').toLowerCase().trim();
+function filterFinances(items, typeFilter, q) {
+  if (typeFilter !== 'todos') items = items.filter(f => f.type === typeFilter);
+  q = (q || '').toLowerCase().trim();
   if (q) items = items.filter(f =>
     (f.description || '').toLowerCase().includes(q) ||
     (f.category    || '').toLowerCase().includes(q) ||
     (f.notes       || '').toLowerCase().includes(q)
   );
+  return items;
+}
 
-  // Ordenamiento
-  items.sort((a, b) => {
+function sortFinances(items) {
+  return items.sort((a, b) => {
     const va = finSort.col === 'amount' ? (a.amount || 0) : (a.date || '');
     const vb = finSort.col === 'amount' ? (b.amount || 0) : (b.date || '');
     if (va === vb) return 0;
     return finSort.asc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
   });
+}
 
-  // Paginación
-  const total      = items.length;
-  const totalPages = Math.max(1, Math.ceil(total / FIN_PAGE_SIZE));
-  if (finPage > totalPages) finPage = 1;
-  const start     = (finPage - 1) * FIN_PAGE_SIZE;
-  const pageItems = items.slice(start, start + FIN_PAGE_SIZE);
-
-  // Render filas
-  if (!pageItems.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin movimientos registrados</td></tr>';
-  } else {
-    tbody.innerHTML = pageItems.map(f => `
+function finRowsHtml(items, emptyMsg) {
+  if (!items.length) return `<tr><td colspan="6" class="empty-state">${emptyMsg}</td></tr>`;
+  return items.map(f => `
       <tr>
         <td>${fmtDate(f.date)}</td>
         <td>${f.description}</td>
@@ -57,45 +46,26 @@ function renderFin() {
           <button class="btn btn-danger btn-sm" onclick="deleteFin('${f.id}')">✕</button>
         </td>
       </tr>`).join('');
-  }
+}
 
-  // Render paginación
-  renderFinPagination(totalPages, total);
-  // Actualizar botones de orden
+// ── Movimientos del mes en curso ──
+
+function renderFin() {
+  const month = currentMonth();
+  document.getElementById('finTitle').textContent = `Movimientos de ${monthLabel(month)}`;
+
+  let items = cache.finances.filter(f => (f.date || '').startsWith(month));
+  items = sortFinances(filterFinances(items, finFilter, document.getElementById('finSearch')?.value));
+
+  const { page, totalPages, pageItems } = paginate(items, finPage, FIN_PAGE_SIZE);
+  finPage = page;
+  document.getElementById('finTable').innerHTML = finRowsHtml(pageItems, 'Sin movimientos este mes');
+  renderPagination('finPagination', page, totalPages, items.length, 'goFinPage');
   updateFinSortBtns();
 }
 
-function renderFinPagination(totalPages, total) {
-  const el = document.getElementById('finPagination');
-  if (!el) return;
-
-  if (totalPages <= 1) {
-    el.innerHTML = total > 0
-      ? `<div class="pagination-info">${total} registro${total !== 1 ? 's' : ''}</div>`
-      : '';
-    return;
-  }
-
-  let html = `<div class="pagination">`;
-  html += `<button class="page-btn" onclick="goFinPage(${finPage - 1})" ${finPage <= 1 ? 'disabled' : ''}>‹</button>`;
-
-  for (let i = 1; i <= totalPages; i++) {
-    if (i === 1 || i === totalPages || Math.abs(i - finPage) <= 1) {
-      html += `<button class="page-btn${i === finPage ? ' active' : ''}" onclick="goFinPage(${i})">${i}</button>`;
-    } else if (Math.abs(i - finPage) === 2) {
-      html += `<span class="page-ellipsis">…</span>`;
-    }
-  }
-
-  html += `<button class="page-btn" onclick="goFinPage(${finPage + 1})" ${finPage >= totalPages ? 'disabled' : ''}>›</button>`;
-  html += `<span class="pagination-info">${total} registros</span>`;
-  html += `</div>`;
-  el.innerHTML = html;
-}
-
 function goFinPage(p) {
-  const totalPages = Math.max(1, Math.ceil(cache.finances.length / FIN_PAGE_SIZE));
-  finPage = Math.max(1, Math.min(p, totalPages));
+  finPage = p;
   renderFin();
 }
 
@@ -106,8 +76,10 @@ function setFinSort(col) {
     finSort.col = col;
     finSort.asc = false;
   }
-  finPage = 1;
+  finPage  = 1;
+  histPage = 1;
   renderFin();
+  if (document.getElementById('finHistoryModal').classList.contains('open')) renderFinHistory();
 }
 
 function updateFinSortBtns() {
@@ -230,17 +202,110 @@ function renderWeekResult(mon, sun) {
 }
 
 function renderGeneral() {
-  const totalIng = sumFinances('ingreso');
-  const totalSal = sumFinances('salida');
+  const month    = currentMonth();
+  const from     = `${month}-01`, to = `${month}-31`;
+  const totalIng = sumFinances('ingreso', from, to);
+  const totalSal = sumFinances('salida',  from, to);
   const bal      = totalIng - totalSal;
+  const citas    = cache.appointments.filter(a => a.status === 'completada' && a.date.startsWith(month)).length;
+  document.getElementById('generalTitle').textContent = `Resumen de ${monthLabel(month)}`;
   document.getElementById('generalSummary').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--gray)">Total ingresos</span><span style="color:var(--green);font-weight:500">${fmt(totalIng)}</span></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--gray)">Total salidas</span><span style="color:var(--red);font-weight:500">${fmt(totalSal)}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--gray)">Ingresos</span><span style="color:var(--green);font-weight:500">${fmt(totalIng)}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--gray)">Salidas</span><span style="color:var(--red);font-weight:500">${fmt(totalSal)}</span></div>
       <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid var(--cream2)">
-        <span style="font-weight:500">Balance total</span>
+        <span style="font-weight:500">Balance del mes</span>
         <span style="font-family:'Cormorant Garamond',serif;font-size:20px;color:${bal>=0?'var(--green)':'var(--red)'};font-weight:600">${fmt(bal)}</span>
       </div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--gray)">Total citas</span><span>${cache.appointments.length}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--gray)">Citas completadas</span><span>${citas}</span></div>
     </div>`;
+}
+
+// ── Historial (por día, mes o año) ──
+
+function openFinHistory() {
+  const now = new Date();
+  document.getElementById('histMode').value   = 'mes';
+  document.getElementById('histDay').value    = today();
+  document.getElementById('histMonth').value  = String(now.getMonth() + 1).padStart(2, '0');
+  document.getElementById('histYear').value   = now.getFullYear();
+  document.getElementById('histSearch').value = '';
+  histFilter = 'todos';
+  histPage   = 1;
+  document.querySelectorAll('#histFilters .filter-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+  updateHistInputs();
+  renderFinHistory();
+  openModal('finHistoryModal');
+}
+
+function updateHistInputs() {
+  const mode = document.getElementById('histMode').value;
+  document.getElementById('histDay').style.display   = mode === 'dia' ? '' : 'none';
+  document.getElementById('histMonth').style.display = mode === 'mes' ? '' : 'none';
+  document.getElementById('histYear').style.display  = mode === 'dia' ? 'none' : '';
+}
+
+function onHistChange() {
+  updateHistInputs();
+  histPage = 1;
+  renderFinHistory();
+}
+
+// Prefijo de fecha del período elegido: YYYY-MM-DD, YYYY-MM o YYYY
+function histPrefix() {
+  const mode = document.getElementById('histMode').value;
+  const year = String(document.getElementById('histYear').value || '').trim();
+  if (mode === 'dia') return document.getElementById('histDay').value || '';
+  if (!/^\d{4}$/.test(year)) return '';
+  return mode === 'mes' ? `${year}-${document.getElementById('histMonth').value}` : year;
+}
+
+function histPeriodLabel(prefix) {
+  if (prefix.length === 10) return fmtDate(prefix);
+  if (prefix.length === 7)  return monthLabel(prefix);
+  return `Año ${prefix}`;
+}
+
+function renderFinHistory() {
+  const tbody  = document.getElementById('histTable');
+  const sumEl  = document.getElementById('histSummary');
+  const prefix = histPrefix();
+
+  if (!prefix) {
+    sumEl.innerHTML = '';
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Selecciona un período</td></tr>';
+    renderPagination('histPagination', 1, 1, 0, 'goHistPage');
+    return;
+  }
+
+  const period = cache.finances.filter(f => (f.date || '').startsWith(prefix));
+  const ing    = period.filter(f => f.type === 'ingreso').reduce((s, f) => s + f.amount, 0);
+  const sal    = period.filter(f => f.type === 'salida').reduce((s, f) => s + f.amount, 0);
+  const bal    = ing - sal;
+  sumEl.innerHTML = `
+    <div class="hist-summary">
+      <div class="hist-period">${histPeriodLabel(prefix)}</div>
+      <div><span>Ingresos</span><strong style="color:var(--green)">${fmt(ing)}</strong></div>
+      <div><span>Salidas</span><strong style="color:var(--red)">${fmt(sal)}</strong></div>
+      <div><span>Balance</span><strong style="color:${bal>=0?'var(--green)':'var(--red)'}">${fmt(bal)}</strong></div>
+    </div>`;
+
+  const items = sortFinances(filterFinances(period, histFilter, document.getElementById('histSearch').value));
+  const { page, totalPages, pageItems } = paginate(items, histPage, FIN_PAGE_SIZE);
+  histPage = page;
+  tbody.innerHTML = finRowsHtml(pageItems, 'Sin movimientos en este período');
+  renderPagination('histPagination', page, totalPages, items.length, 'goHistPage');
+}
+
+function goHistPage(p) {
+  histPage = p;
+  renderFinHistory();
+}
+
+function setHistFilter(f, btn) {
+  histFilter = f;
+  histPage   = 1;
+  document.querySelectorAll('#histFilters .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFinHistory();
 }

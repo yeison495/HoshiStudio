@@ -29,12 +29,26 @@ function renderCal() {
 
   for (let d = 1; d <= daysInMonth; d++) {
     const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const hasAppt = cache.appointments.some(a => a.date === ds);
+    const dayAppts = cache.appointments
+      .filter(a => a.date === ds && (a.status === 'pendiente' || a.status === 'confirmada'))
+      .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
     const cls = ['cal-day',
       ds === todayStr     ? 'today'    : '',
       ds === selectedDate ? 'selected' : '',
     ].filter(Boolean).join(' ');
-    html += `<div class="${cls}" onclick="selectDay('${ds}')">${d}${hasAppt ? '<div class="cal-dot"></div>' : ''}</div>`;
+    let apptHtml = '';
+    if (dayAppts.length) {
+      const first     = dayAppts[0];
+      const firstName = first.client_name.split(' ')[0];
+      const extra     = dayAppts.length - 1;
+      apptHtml = `
+        <div class="cal-appt" title="${dayAppts.map(a => a.client_name).join(', ')}">
+          <span class="cal-dot" style="background:${STATUS_ICON[first.status].color}"></span>
+          <span class="cal-appt-name">${firstName}</span>
+          ${extra ? `<span class="cal-appt-more">+${extra}</span>` : ''}
+        </div>`;
+    }
+    html += `<div class="${cls}" onclick="selectDay('${ds}')"><span class="cal-day-num">${d}</span>${apptHtml}</div>`;
   }
   document.getElementById('calGrid').innerHTML = html;
 }
@@ -89,12 +103,22 @@ const STATUS_ICON = {
 
 function renderAllAppts() {
   const tbody = document.getElementById('allApptTable');
-  const appts = [...cache.appointments];
+  const month = currentMonth();
+  document.getElementById('allApptTitle').textContent = `Citas de ${monthLabel(month)}`;
+
+  const appts = cache.appointments
+    .filter(a => a.date.startsWith(month))
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''));
+
+  const { page, totalPages, pageItems } = paginate(appts, apptPage, APPT_PAGE_SIZE);
+  apptPage = page;
+  renderPagination('apptPagination', page, totalPages, appts.length, 'goApptPage');
+
   if (!appts.length) {
-    tbody.innerHTML = '<tr><td colspan="2" class="empty-state">Sin citas registradas</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="2" class="empty-state">Sin citas este mes</td></tr>';
     return;
   }
-  tbody.innerHTML = appts.map(a => {
+  tbody.innerHTML = pageItems.map(a => {
     const si = STATUS_ICON[a.status] || { symbol: '?', color: '#999', label: a.status };
     return `
     <tr class="appt-row" onclick="showApptDetail('${a.id}')">
@@ -105,6 +129,11 @@ function renderAllAppts() {
       </td>
     </tr>`;
   }).join('');
+}
+
+function goApptPage(p) {
+  apptPage = p;
+  renderAllAppts();
 }
 
 // ── Guardar cita ──

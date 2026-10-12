@@ -22,6 +22,10 @@ let finSearch       = '';
 let finSort         = { col: 'date', asc: false };
 let finPage         = 1;
 const FIN_PAGE_SIZE = 15;
+let apptPage        = 1;
+const APPT_PAGE_SIZE = 10;
+let histFilter      = 'todos';
+let histPage        = 1;
 let clientFilter    = 'todas';
 let currentApptId   = null;
 let currentClientId = null;
@@ -44,6 +48,56 @@ function fmtDate(d) {
 
 function today() {
   return new Date().toISOString().slice(0, 10);
+}
+
+// Mes real en curso (hora local) en formato YYYY-MM
+function currentMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function monthLabel(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  return new Date(y, m - 1, 1)
+    .toLocaleString('es-CO', { month: 'long', year: 'numeric' })
+    .replace(/^\w/, c => c.toUpperCase());
+}
+
+// ── Paginación genérica ──
+
+function paginate(items, page, size) {
+  const totalPages = Math.max(1, Math.ceil(items.length / size));
+  const p          = Math.min(Math.max(1, page), totalPages);
+  return { page: p, totalPages, pageItems: items.slice((p - 1) * size, p * size) };
+}
+
+// goFn: nombre de la función global que recibe el número de página
+function renderPagination(elId, page, totalPages, total, goFn) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+
+  if (totalPages <= 1) {
+    el.innerHTML = total > 0
+      ? `<div class="pagination-info">${total} registro${total !== 1 ? 's' : ''}</div>`
+      : '';
+    return;
+  }
+
+  let html = `<div class="pagination">`;
+  html += `<button class="page-btn" onclick="${goFn}(${page - 1})" ${page <= 1 ? 'disabled' : ''}>‹</button>`;
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - page) <= 1) {
+      html += `<button class="page-btn${i === page ? ' active' : ''}" onclick="${goFn}(${i})">${i}</button>`;
+    } else if (Math.abs(i - page) === 2) {
+      html += `<span class="page-ellipsis">…</span>`;
+    }
+  }
+
+  html += `<button class="page-btn" onclick="${goFn}(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>›</button>`;
+  html += `<span class="pagination-info">${total} registros</span>`;
+  html += `</div>`;
+  el.innerHTML = html;
 }
 
 function daysBetween(d1, d2) {
